@@ -3,8 +3,4 @@
 # 每次打开应用时需要从文件中读取相应的参数
 # 目前计划使用json文件存储
 class GlobalVar:
-    book_table_created = False
-    booklist_table_created = False
-    author_table_created = False
-    history_table_created = False
     CUR_ID = 0

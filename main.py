@@ -1,2 +1,11 @@
-# 主程序,只允许调用fileMethods.py和search.py里的内容
+# 主程序
+from ui import BookManager
+from PyQt5.QtWidgets import QApplication
+import sys
+
+
+app = QApplication(sys.argv)
+bookManager = BookManager()
+sys.exit(app.exec_())
+
 

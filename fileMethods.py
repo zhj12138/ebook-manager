@@ -49,16 +49,19 @@ def convertToHTML(file_path, to_path):
             text = page.getText('html')
             f.write(text)
 
+
 def convertToPNG(file_path, to_path, from_page, to_page=-1):
     doc = fitz.open(file_path)
     os.chdir(to_path)
     os.mkdir('img')
     os.chdir('img')
     if to_page < from_page:
+        pass
 
 
 def subPDF(file_path, from_page, to_page=-1):
     doc = fitz.open()
     if to_page < from_page:
+        pass
 
 # 文件转换除了自己提供的简单转换外，计划支持pandoc的文件转换
