@@ -204,7 +204,7 @@ class DataBase:
     @staticmethod
     def createHistoryTable():
         conn, cursor = DataBase.connect()
-        cursor.execute('create table %s (time text, content text primary key )' % DataBase.history_table)
+        cursor.execute('create table %s (time float, content text primary key )' % DataBase.history_table)
         DataBase.close(conn)
 
     # 新建作者表
@@ -408,7 +408,7 @@ class DataBase:
     @staticmethod
     def addHistory(time, content):
         conn, cursor = DataBase.connect()
-        cursor.execute("insert into %s values('%s', '%s')" % (DataBase.history_table, time, content))
+        cursor.execute("insert into %s values(%s, '%s')" % (DataBase.history_table, time, content))
         DataBase.close(conn)
 
     @staticmethod
@@ -420,7 +420,7 @@ class DataBase:
     @staticmethod
     def updateHistory(time, content):
         conn, cursor = DataBase.connect()
-        cursor.execute("update %s set time='%s' where content='%s'" % (DataBase.history_table, time, content))
+        cursor.execute("update %s set time=%s where content='%s'" % (DataBase.history_table, time, content))
         DataBase.close(conn)
 
     @staticmethod
