@@ -5,7 +5,7 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QMouseEvent
 from PyQt5.QtWidgets import QTreeWidget, QTableWidget, QListWidget, QToolBar, QTreeWidgetItem, QAction, QGridLayout, \
-    QLabel, QPushButton, QTableWidgetItem, QWidget, QFormLayout, QFrame, QVBoxLayout, QComboBox, QLineEdit
+    QLabel, QPushButton, QTableWidgetItem, QWidget, QFormLayout, QFrame, QVBoxLayout, QComboBox, QLineEdit, QScrollArea
 
 from basic import strListToString
 from classes import Book
@@ -88,29 +88,38 @@ class MyTree(QTreeWidget):
         self.noScore.setText(0, "尚未评分")
 
     def updateAuthors(self, author_list):
+        self.authors.takeChildren()
         for author in author_list:
             node = QTreeWidgetItem(self.authors)
             node.setText(0, author)
+            print(node.parent().text(0))
 
     def updateBookLists(self, book_lists):
+        self.booklists.takeChildren()
         for booklist in book_lists:
             node = QTreeWidgetItem(self.booklists)
-            node.setText(booklist)
+            node.setText(0, booklist)
 
     def updateTags(self, tag_list):
+        self.tags.takeChildren()
         for tag in tag_list:
             node = QTreeWidgetItem(self.tags)
-            node.setText(tag)
+            node.setText(0, tag)
 
     def updateLanguage(self, language_list):
+        self.language.takeChildren()
         for language in language_list:
             node = QTreeWidgetItem(self.language)
-            node.setText(language)
+            node.setText(0, language)
 
     def updatePublisher(self, pub_list):
+        self.publisher.takeChildren()
         for publisher in pub_list:
             node = QTreeWidgetItem(self.publisher)
-            node.setText(publisher)
+            node.setText(0, publisher)
+
+    # def updateRating(self):
+    #     self.rating.takeChildren()
 
 
 class MyLabel(QLabel):
@@ -128,7 +137,7 @@ class MyGrid(QGridLayout):
         super(MyGrid, self).__init__(parent)
         self.father = parent
         self.scrollarea = scro
-        print(parent.size().width(), parent.size().height())
+        # print(parent.size().width(), parent.size().height())
         # self.father.resizeEvent = self.onResize
         # print(wid.size().width(), wid.size().height())
         self.setSpacing(30)
@@ -136,58 +145,18 @@ class MyGrid(QGridLayout):
         self.dict = {}
         self.itemWidth = 365
         self.itemHeight = 458
-        # book1 = MyLabel()
-        # book1.setPixmap(QPixmap('testBookImage/1.png').scaled(self.itemWidth, self.itemHeight))
-        # book1.clicked.connect(self.onItemClicked)
-        # book2 = MyLabel()
-        # book2.setPixmap(QPixmap('testBookImage/2.png').scaled(self.itemWidth, self.itemHeight))
-        # book2.clicked.connect(self.onItemClicked)
-        # # self.dict[book2] = "What"
-        # book3 = MyLabel()
-        # book3.setPixmap(QPixmap('testBookImage/3.png').scaled(self.itemWidth, self.itemHeight))
-        # book3.clicked.connect(self.onItemClicked)
-        # book4 = MyLabel()
-        # book4.setPixmap(QPixmap('testBookImage/1.png').scaled(self.itemWidth, self.itemHeight))
-        # book4.clicked.connect(self.onItemClicked)
-        # book5 = MyLabel()
-        # book5.setPixmap(QPixmap('testBookImage/2.png').scaled(self.itemWidth, self.itemHeight))
-        # book5.clicked.connect(self.onItemClicked)
-        # # self.dict[book2] = "What"
-        # book6 = MyLabel()
-        # book6.setPixmap(QPixmap('testBookImage/3.png').scaled(self.itemWidth, self.itemHeight))
-        # book6.clicked.connect(self.onItemClicked)
-        # book7 = MyLabel()
-        # book7.setPixmap(QPixmap('testBookImage/1.png').scaled(self.itemWidth, self.itemHeight))
-        # book7.clicked.connect(self.onItemClicked)
-        # book8 = MyLabel()
-        # book8.setPixmap(QPixmap('testBookImage/2.png').scaled(self.itemWidth, self.itemHeight))
-        # book8.clicked.connect(self.onItemClicked)
-        # # self.dict[book2] = "What"
-        # book9 = MyLabel()
-        # book9.setPixmap(QPixmap('testBookImage/3.png').scaled(self.itemWidth, self.itemHeight))
-        # book9.clicked.connect(self.onItemClicked)
-        # self.addWidget(book1, 0, 0)
-        # self.addWidget(book2, 0, 1)
-        # self.addWidget(book3, 0, 2)
-        # self.addWidget(book4, 1, 0)
-        # self.addWidget(book5, 1, 1)
-        # self.addWidget(book6, 1, 2)
-        # self.addWidget(book7, 2, 0)
-        # self.addWidget(book8, 2, 1)
-        # self.addWidget(book9, 2, 2)
 
     def updateView(self, books: Books):
-        # print("A", self.itemWidth, self.itemHeight)
-        # book11 = MyLabel()
-        # # book11.setPixmap(QPixmap('testBookImage/11.png').scaled(wid, hei))
-        # a = QPixmap('testBookImage/12.png').scaled(self.itemWidth, self.itemHeight)
-        # print(a.size().width())
-        # print(a.size().height())
-        # book11.setPixmap(a)
-        # book11.clicked.connect(self.handleMouse)
+        # children = self.findChildren(MyLabel)
+        # for child in children:
+        #     self.removeWidget(child)
+        if not books:
+            return
         total = len(books)
         # print(total)
         cols = 3
+        # if self.scrollarea.size().width() > 1500:
+        #     cols = 4
         rows = ceil(total / cols)
         # print(cols)
         # print(rows)
@@ -211,17 +180,15 @@ class MyGrid(QGridLayout):
             self.lastActive.setStyleSheet("")
         sender.setStyleSheet("border:4px solid blue;")
         self.lastActive = sender
-        # self.itemClicked.emit(self.dict[sender])  # 传回一个ID
-        print(sender.pixmap().size().width(), sender.pixmap().size().height())
+        self.itemClicked.emit(self.dict[sender])  # 传回一个ID
+        # print(sender.pixmap().size().width(), sender.pixmap().size().height())
         # print(sender.pixmap().)
 
 
-
-class MyList(QWidget):
-    def __init__(self):
-        super(MyList, self).__init__()
-        self.setFont(QFont("", 15))
-
+class MyList(QVBoxLayout):
+    def __init__(self, father):
+        super(MyList, self).__init__(father)
+        self.father = father
         self.picLabel = QLabel()
         self.picLabel.setPixmap(QPixmap('img/default-pic.png').scaled(286, 320))
         self.namelabel = QLabel("书名")
@@ -230,12 +197,13 @@ class MyList(QWidget):
         self.formatlabel = QLabel("格式")
         self.tagslabel = QLabel("标签")
         self.booklistslabel = QLabel("书单")
-        self.name = QLabel("无")
-        self.authors = QLabel("无")
-        self.path = QLabel("无")
-        self.format = QLabel("无")
+        self.name = QLabel("未知")
+        self.authors = QLabel("未知")
+        self.path = MyLabel("无")
+        self.format = MyLabel("无")
         self.tags = QLabel("无")
         self.booklists = QLabel("无")
+        self.bookPath = None
 
         self.form = QFormLayout()
         self.form.insertRow(0, self.namelabel, self.name)
@@ -246,36 +214,63 @@ class MyList(QWidget):
         self.form.insertRow(5, self.booklistslabel, self.booklists)
 
         # self.detaillabel = QLabel("书籍的详细信息")
-        vlay = QVBoxLayout()
-        vlay.addWidget(self.picLabel)
+        # vlay = QVBoxLayout()
+        self.addWidget(self.picLabel)
         temwidget = QWidget()
+        temwidget.setFont(QFont("", 14))
         temwidget.setLayout(self.form)
-        temwidget.setMaximumSize(200, 300)
-        vlay.addWidget(temwidget)
+        self.scrollarea = QScrollArea()
+        self.scrollarea.setFrameShape(QFrame.NoFrame)
+        # self.scrollarea.setStyleSheet("border:none;QLabel{font-size:14px;}")
+        self.scrollarea.setWidget(temwidget)
+        # temwidget.setMaximumSize(200, 300)
+        self.addWidget(self.scrollarea)
         # vlay.addWidget(self.detaillabel)
-        self.setLayout(vlay)
+        # self.setLayout(vlay)
 
     def updateView(self, book: Book):
-        self.picLabel.setPixmap(QPixmap(book.cover_path))
+        if book.cover_path:
+            self.picLabel.setPixmap(QPixmap(book.cover_path).scaled(365, 458))
+        else:
+            self.picLabel.setPixmap(QPixmap('img/default-pic.png').scaled(286, 320))
         if book.name:
             self.name.setText(book.name)
+        else:
+            self.name.setText("未知")
         if book.authors:
             self.authors.setText(strListToString(book.authors))
+        else:
+            self.authors.setText("未知")
         if book.file_path:
-            self.path.setText("<a style='color: blue'>{}</a>".format(book.file_path))
+            self.bookPath = book.file_path
+            self.path.setText("<a style='color: blue'>打开</a>")
             self.format.setText("<a style='color: blue'>PDF</a>")
-            self.format.mousePressEvent = self.openFile
-            self.path.mousePressEvent = self.openPath
+            self.format.clicked.connect(self.openFile)
+            self.path.clicked.connect(self.openPath)
+        else:
+            self.bookPath = None
+            self.path.setText("无")
+            self.format.setText("无")
         if book.tags:
-            self.path.setText(strListToString(book.tags))
+            self.tags.setText(strListToString(book.tags))
+        else:
+            self.tags.setText("无")
         if book.bookLists:
             self.booklists.setText(strListToString(book.bookLists))
+        else:
+            self.booklists.setText("无")
+        temp = QWidget()
+        temp.setFont(QFont("", 14))
+        temp.setLayout(self.form)
+        temp.setMinimumWidth(0)
+        self.scrollarea.setWidget(temp)
 
-    def openFile(self, ev):
-        os.startfile(self.path.text())
+    def openFile(self):
+        os.startfile(self.bookPath)
 
-    def openPath(self, ev):
-        os.startfile(self.path.text()[:-1])
+    def openPath(self):
+        mypath, fileName = os.path.split(self.bookPath)
+        os.startfile(mypath)
 
 
 class MySearch(QToolBar):

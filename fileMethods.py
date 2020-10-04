@@ -1,16 +1,18 @@
 # 此文件存储pdf文件相关方法
 import fitz
 import os
+
+from basic import parseStrListString
 from classes import *
 import shutil
 
 
 def getTitle(doc):
     if doc.metadata['title']:
-        return doc.metadata['title']
+        return doc.metadata['title'].replace(' ', '_')
     else:
         name = doc.name.split('/')[-1][:-4]
-        return name
+        return name.replace(' ', '_')
 
 
 def getAuthors(doc):
@@ -32,19 +34,19 @@ def getFilePath(basePath, name, ID, filename):
         return
     os.chdir(basePath)
     bookPath = os.path.join(basePath, name+"_"+str(ID))
-    print(bookPath)
+    # print(bookPath)
     try:
         os.mkdir(name+"_"+str(ID))
     except:
         print("File exists")
     bookFilePath = shutil.copy(filename, bookPath)
-    print(bookFilePath)
+    # print(bookFilePath)
     return bookPath, bookFilePath
 
 
 def getCover(doc, bookPath):
-    zoom_x = 0.5  # horizontal zoom
-    zomm_y = 0.5  # vertical zoom
+    zoom_x = 0.666  # horizontal zoom
+    zomm_y = 0.666  # vertical zoom
     mat = fitz.Matrix(zoom_x, zomm_y)  # zoom factor 2 in each dimension
     pix = doc[0].getPixmap(matrix=mat)
     coverPath = os.path.join(bookPath, "cover.png")
