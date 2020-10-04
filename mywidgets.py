@@ -11,6 +11,9 @@ from basic import strListToString
 from classes import Book
 from typing import List
 
+from mydatabase import MyDb
+
+
 Books = List[Book]
 
 
@@ -24,7 +27,8 @@ class MyToolBar(QToolBar):
         self.addbook = QAction(QIcon('img/add-2.png'), "添加书籍", self)
         self.inbook = QAction(QIcon('img/import-6.png'), "导入", self)
         self.editbook = QAction(QIcon('img/edit-5.png'), "编辑元数据", self)
-        self.sortbooks = QAction(QIcon('img/sort-7.png'), "排序", self)
+        self.sortbooks = QAction(QIcon('img/sortUp-2.png'), "排序", self)
+        self.highSort = QAction(QIcon('img/sort-7.png'), "高级排序", self)
         self.readbook = QAction(QIcon('img/read-2.png'), "阅读书籍", self)
         self.convertbook = QAction(QIcon('img/convert-1.png'), "转换书籍", self)
         self.deletebook = QAction(QIcon('img/delete-4.png'), "移除书籍", self)
@@ -33,25 +37,28 @@ class MyToolBar(QToolBar):
         self.export = QAction(QIcon('img/export-1.png'), "导出", self)
         self.share = QAction(QIcon('img/share-7.png'), "分享", self)
         self.star = QAction(QIcon('img/star-1.png'), "支持我们", self)
-        self.gethelp = QAction(QIcon("img/help-2.png"), "帮助", self)
+        # self.gethelp = QAction(QIcon("img/help-2.png"), "帮助", self)
         self.setting = QAction(QIcon("img/setting-3.png"), "设置", self)
 
         self.addActions([self.addbook, self.inbook])
         self.addSeparator()
-        self.addActions([self.editbook, self.sortbooks])
+        self.addActions([self.editbook, self.sortbooks, self.highSort])
         self.addSeparator()
         self.addActions([self.readbook, self.convertbook, self.deletebook])
         self.addSeparator()
         self.addActions([self.booklist, self.bookshelf])
         self.addSeparator()
-        self.addActions([self.export, self.share, self.star, self.gethelp])
+        self.addActions([self.export, self.share, self.star])
         self.addSeparator()
         self.addActions([self.setting])
 
 
 class MyTree(QTreeWidget):
-    def __init__(self):
+    itemClickedSignal = pyqtSignal(list)
+
+    def __init__(self, db: MyDb):
         super(MyTree, self).__init__()
+        self.db = db
         self.setColumnCount(1)
         self.setHeaderHidden(True)
         self.setFont(QFont("", 15))
@@ -86,13 +93,14 @@ class MyTree(QTreeWidget):
         self.oneScore.setText(0, "1星")
         self.noScore = QTreeWidgetItem(self.rating)
         self.noScore.setText(0, "尚未评分")
+        self.itemClicked.connect(self.onItemClicked)
 
     def updateAuthors(self, author_list):
         self.authors.takeChildren()
         for author in author_list:
             node = QTreeWidgetItem(self.authors)
             node.setText(0, author)
-            print(node.parent().text(0))
+            # print(node.parent().text(0))
 
     def updateBookLists(self, book_lists):
         self.booklists.takeChildren()
@@ -120,6 +128,35 @@ class MyTree(QTreeWidget):
 
     # def updateRating(self):
     #     self.rating.takeChildren()
+    def onItemClicked(self, item: QTreeWidgetItem, col):
+        # if not item.parent():  # 是顶层结点，更新booksview变为显示所有书籍
+        books = self.db.getAllBooks()
+        ITEM_TEXT = item.text(0)
+        if item.parent():
+            if item.parent().text(0) == "作者":
+                books = [book for book in books if ITEM_TEXT in book.authors]
+            elif item.parent().text(0) == "书单":
+                books = [book for book in books if ITEM_TEXT in book.bookLists]
+            elif item.parent().text(0) == "标签":
+                books = [book for book in books if ITEM_TEXT in book.tags]
+            elif item.parent().text(0) == "语言":
+                books = [book for book in books if book.language == ITEM_TEXT]
+            elif item.parent().text(0) == "出版社":
+                books = [book for book in books if book.publisher == ITEM_TEXT]
+            else:  # 评分
+                if ITEM_TEXT == "5星":
+                    books = [book for book in books if book.rating == 5]
+                elif ITEM_TEXT == '4星':
+                    books = [book for book in books if book.rating == 4]
+                elif ITEM_TEXT == '3星':
+                    books = [book for book in books if book.rating == 3]
+                elif ITEM_TEXT == '2星':
+                    books = [book for book in books if book.rating == 2]
+                elif ITEM_TEXT == '1星':
+                    books = [book for book in books if book.rating == 1]
+                else:  # 尚未评分
+                    books = [book for book in books if book.rating == 0]
+        self.itemClickedSignal.emit(books)
 
 
 class MyLabel(QLabel):
@@ -150,6 +187,8 @@ class MyGrid(QGridLayout):
         # children = self.findChildren(MyLabel)
         # for child in children:
         #     self.removeWidget(child)
+        self.deleteAll()
+        self.lastActive = None
         if not books:
             return
         total = len(books)
@@ -167,12 +206,20 @@ class MyGrid(QGridLayout):
             tempLabel = MyLabel()
             tempLabel.setPixmap(QPixmap(book.cover_path).scaled(self.itemWidth, self.itemHeight))
             tempLabel.setScaledContents(True)
+            if book.name:
+                tempLabel.setToolTip(book.name)
             tempLabel.clicked.connect(self.onItemClicked)
             self.dict[tempLabel] = book.ID
             self.addWidget(tempLabel, *point)
         tempWid.setLayout(self)
         self.scrollarea.setWidget(tempWid)
         self.father = tempWid
+
+    def deleteAll(self):
+        while self.count():
+            item = self.takeAt(0)
+            widget = item.widget()
+            widget.deleteLater()
 
     def onItemClicked(self):
         sender = self.sender()
@@ -190,7 +237,7 @@ class MyList(QVBoxLayout):
         super(MyList, self).__init__(father)
         self.father = father
         self.picLabel = QLabel()
-        self.picLabel.setPixmap(QPixmap('img/default-pic.png').scaled(286, 320))
+        self.picLabel.setPixmap(QPixmap('img/default-pic.png').scaled(365, 458))
         self.namelabel = QLabel("书名")
         self.authorlabel = QLabel("作者")
         self.pathlabel = QLabel("路径")
@@ -228,11 +275,21 @@ class MyList(QVBoxLayout):
         # vlay.addWidget(self.detaillabel)
         # self.setLayout(vlay)
 
+    def setDefault(self):
+        self.picLabel.setPixmap(QPixmap('img/default-pic.png').scaled(365, 458))
+        self.name = QLabel("未知")
+        self.authors = QLabel("未知")
+        self.path = MyLabel("无")
+        self.format = MyLabel("无")
+        self.tags = QLabel("无")
+        self.booklists = QLabel("无")
+        self.bookPath = None
+
     def updateView(self, book: Book):
         if book.cover_path:
             self.picLabel.setPixmap(QPixmap(book.cover_path).scaled(365, 458))
         else:
-            self.picLabel.setPixmap(QPixmap('img/default-pic.png').scaled(286, 320))
+            self.picLabel.setPixmap(QPixmap('img/default-pic.png').scaled(365, 458))
         if book.name:
             self.name.setText(book.name)
         else:

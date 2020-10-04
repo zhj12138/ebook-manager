@@ -2,6 +2,8 @@
 from basic import strListToString
 import fitz
 from collections import deque
+import shutil
+import os
 
 
 class Book:
@@ -50,7 +52,7 @@ class Book:
         for author in self.authors:
             obj = db.getAuthorByName(author)
             if obj:
-                obj.deleteBook(self.ID)
+                obj.deleteBook(db, self.ID)
         self.authors = new_authors
         self.updateDB(db)
         for author in self.authors:
@@ -63,12 +65,22 @@ class Book:
     # 把当前书添加到某个书单中
     # 传入一个BookList对象
     def addToList(self, db, booklist_name):
-        booklist = db.getBooksByList(booklist_name)
+        booklist = db.getBookListByName(booklist_name)
         if not booklist:  # 不存在，将创建一个新书单
             booklist = BookList(booklist_name, [])
             db.addBooklist(booklist)
         booklist.addBook(db, self.ID)
-        self.bookLists.append(booklist_name)
+        if booklist_name not in self.bookLists:
+            self.bookLists.append(booklist_name)
+
+    # 传入书单名数组
+    def setBookLists(self, db, bookLists):
+        for bookList in self.bookLists:
+            obj = db.getBookListByName(bookList)
+            if obj:
+                obj.deleteBook(db, self.ID)
+        for boolist in bookLists:
+            self.addToList(db, boolist)
 
     # 每次修改信息后需主动调用updateDB()方法
     # 修改数据库内书籍的信息
@@ -77,7 +89,17 @@ class Book:
 
     # 删除书籍
     def delete(self, db):
-        db.deleteBook(self)
+        for author in self.authors:
+            obj = db.getAuthorByName(author)
+            if obj:
+                obj.deleteBook(db, self.ID)
+        for booklist in self.bookLists:
+            obj = db.getBookListByName(booklist)
+            if obj:
+                obj.deleteBook(db, self.ID)
+        path, file = os.path.split(self.file_path)
+        shutil.rmtree(path)
+        db.deleteBook(self.ID)
 
     # 打开当前书籍
     def openBook(self):
@@ -137,9 +159,10 @@ class BookList:
         self.updateDB(db)
 
     def deleteBook(self, db, book_id):
-        self.books.remove(book_id)
+        if book_id in self.books:
+            self.books.remove(book_id)
         # 书单内书的数量为空时，不需要删去该书单
-        self.updateDB(db)
+            self.updateDB(db)
 
     def delete(self, db):
         db.deleteBooklist(self)

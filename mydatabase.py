@@ -134,16 +134,15 @@ class MyDb:
             return None
         return booklists
 
-    # 根据书单名进行检索，返回书籍ID列表
-    def getBooksByList(self, list_name):
-        books = []
+    # 根据书单名进行检索，返回相应书单
+    def getBookListByName(self, list_name):
         self.connect()
         ret = self.cursor.execute("select * from %s where name='%s'" % (self.booklist_table, list_name))
-        for row in ret:
-            ID = parseIntListString(row[2])
-            books.append(ID)
+        booklists = parseRetBooklists(ret)
         self.close()
-        return books
+        if not booklists:
+            return None
+        return booklists[0]
 
     # 获取所有的历史记录，返回一个History列表
     def getAllHistory(self, history):
@@ -177,7 +176,7 @@ class MyDb:
         return languageList
 
     def getAllPublishers(self):
-        publisherList = {book.publisher for book in self.getAllBooks() if book.language != ''}
+        publisherList = {book.publisher for book in self.getAllBooks() if book.publisher != ''}
         return publisherList
 
     # 根据作者名进行检索，返回书籍ID列表
@@ -289,7 +288,7 @@ class MyDb:
         self.close()
 
     def booklistInDB(self, booklist):
-        if not self.getBooksByList(booklist.name):
+        if not self.getBookListByName(booklist.name):
             return False
         return True
 

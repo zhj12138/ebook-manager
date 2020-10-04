@@ -1,12 +1,14 @@
 # 此文件为UI程序
 import time
 
+from PyQt5.QtCore import QUrl
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from mywidgets import *
 from mydatabase import MyDb
 from fileMethods import *
 import os
+from mydialogs import *
 
 
 class BookManager(QMainWindow):
@@ -16,8 +18,13 @@ class BookManager(QMainWindow):
         self.addToolBar(self.toolbar)
         self.generateToolBar()
 
+        self.mainExePath = os.getcwd()
+        self.db = MyDb(os.path.join(self.mainExePath, 'info.db'))
+        self.bookShelfPath = os.path.join(self.mainExePath, "books")
+
         self.searchLine = MySearch()
-        self.treeView = MyTree()
+        self.treeView = MyTree(self.db)
+        self.treeView.itemClickedSignal.connect(self.onTreeItemClicked)
         self.treeView.setMaximumWidth(1000)
         self.treeView.setMinimumWidth(200)
         self.scrollarea = QScrollArea()
@@ -57,11 +64,6 @@ class BookManager(QMainWindow):
         self.mainwidget.setLayout(self.VBox)
         self.setCentralWidget(self.mainwidget)
 
-        self.mainExePath = os.getcwd()
-        self.db = MyDb(os.path.join(self.mainExePath, 'info.db'))
-        self.bookShelfPath = os.path.join(self.mainExePath, "books")
-        # print(self.path)
-
         # 打开时读取数据
         self.curShowBooks = self.db.getAllBooks()
         # print("Hello")
@@ -69,7 +71,7 @@ class BookManager(QMainWindow):
         self.booksView.updateView(self.curShowBooks)
         self.updateTreeView()
         # time.sleep(1)
-
+        QToolTip.setFont(QFont("", 14))
         self.setWindowTitle("图书管理系统")
         desktop = QApplication.desktop()
         rect = desktop.availableGeometry()
@@ -82,6 +84,7 @@ class BookManager(QMainWindow):
         self.toolbar.inbook.triggered.connect(self.inBook)
         self.toolbar.editbook.triggered.connect(self.editBook)
         self.toolbar.sortbooks.triggered.connect(self.sortBooks)
+        self.toolbar.highSort.triggered.connect(self.HighSort)
         self.toolbar.readbook.triggered.connect(self.readBook)
         self.toolbar.convertbook.triggered.connect(self.convertBook)
         self.toolbar.deletebook.triggered.connect(self.deleteBook)
@@ -90,7 +93,7 @@ class BookManager(QMainWindow):
         self.toolbar.export.triggered.connect(self.export)
         self.toolbar.share.triggered.connect(self.share)
         self.toolbar.star.triggered.connect(self.giveusStar)
-        self.toolbar.gethelp.triggered.connect(self.getHelp)
+        # self.toolbar.gethelp.triggered.connect(self.getHelp)
         self.toolbar.setting.triggered.connect(self.setSetting)
 
     def addBook(self):
@@ -125,12 +128,16 @@ class BookManager(QMainWindow):
         tags = self.db.getAllTags()
         self.treeView.updateTags(tags)
         languages = self.db.getAllLanguages()
-        print(languages)
+        # print(languages)
+        # print("Lan", languages)
         self.treeView.updateLanguage(languages)
         publishers = self.db.getAllPublishers()
-        print(publishers)
+        # print("Pub", publishers)
+        # print(publishers)
         self.treeView.updatePublisher(publishers)
 
+    def onTreeItemClicked(self, books):
+        self.booksView.updateView(books)
     # def resizeUpdate(self, ev):
     #     if self.scrollarea.size().width() > 1500:
     #         self.booksView.updateView(self.curShowBooks)
@@ -139,25 +146,54 @@ class BookManager(QMainWindow):
         pass
 
     def editBook(self):
-        pass
+        if not self.booksView.lastActive:
+            return
+        book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
+        if book:
+            dig = EditDataDialog(self.db, book, self)
+            dig.changeSignal.connect(self.onDataChanged)
+            dig.show()
+
+    def onDataChanged(self, ID):
+        self.updateTreeView()
+        self.updateInfo(ID)
 
     def sortBooks(self):
+        books = sorted(self.curShowBooks, key=lambda book: book.name)
+        if books == self.curShowBooks:
+            self.toolbar.sortbooks.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortUp-2.png')))
+            self.curShowBooks = sorted(self.curShowBooks, key=lambda book: book.name, reverse=True)
+        else:
+            self.toolbar.sortbooks.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortDown.png')))
+            self.curShowBooks = books
+        self.booksView.updateView(self.curShowBooks)
+
+    def HighSort(self):
         pass
 
     def readBook(self):
-        pass
+        if self.booksView.lastActive:
+            book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
+            os.startfile(book.file_path)
 
     def convertBook(self):
         pass
 
     def deleteBook(self):
-        pass
+        if self.booksView.lastActive:
+            book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
+            book.delete(self.db)
+            self.updateTreeView()
+            self.curShowBooks = self.db.getAllBooks()
+            self.booksView.updateView(self.curShowBooks)
+            self.infoView.setDefault()
+            # self.booksView.lastActive = None
 
     def addBookList(self):
         pass
 
     def openBookShelf(self):
-        pass
+        os.startfile(self.bookShelfPath)
 
     def export(self):
         pass
@@ -166,10 +202,10 @@ class BookManager(QMainWindow):
         pass
 
     def giveusStar(self):
-        pass
+        QDesktopServices.openUrl(QUrl('https://github.com/zhj12138/ebook-manager'))
 
-    def getHelp(self):
-        pass
+    # def getHelp(self):
+    #     pass
 
     def setSetting(self):
         pass
