@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSource name="test">
+  <database-model serializer="dbm" dbms="SQLITE" family-id="SQLITE" format-version="4.19">
+    <root id="1">
+      <ServerVersion>3.31.1</ServerVersion>
+    </root>
+    <schema id="2" parent="1" name="main">
+      <Current>1</Current>
+    </schema>
+    <collation id="3" parent="1" name="BINARY"/>
+    <collation id="4" parent="1" name="NOCASE"/>
+    <collation id="5" parent="1" name="RTRIM"/>
+    <table id="6" parent="2" name="authorTable"/>
+    <table id="7" parent="2" name="bookTable"/>
+    <table id="8" parent="2" name="booklistTable"/>
+    <table id="9" parent="2" name="historyTable"/>
+    <table id="10" parent="2" name="idTable"/>
+    <table id="11" parent="2" name="sqlite_master">
+      <System>1</System>
+    </table>
+    <column id="12" parent="6" name="name">
+      <Position>1</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="13" parent="6" name="books">
+      <Position>2</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <index id="14" parent="6" name="sqlite_autoindex_authorTable_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>name</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="15" parent="6">
+      <ColNames>name</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_authorTable_1</UnderlyingIndexName>
+    </key>
+    <column id="16" parent="7" name="ID">
+      <Position>1</Position>
+      <DataType>int|0s</DataType>
+    </column>
+    <column id="17" parent="7" name="name">
+      <Position>2</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="18" parent="7" name="authors">
+      <Position>3</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="19" parent="7" name="pub_date">
+      <Position>4</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="20" parent="7" name="publisher">
+      <Position>5</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="21" parent="7" name="isbn">
+      <Position>6</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="22" parent="7" name="language">
+      <Position>7</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="23" parent="7" name="cover_path">
+      <Position>8</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="24" parent="7" name="rating">
+      <Position>9</Position>
+      <DataType>int|0s</DataType>
+    </column>
+    <column id="25" parent="7" name="file_path">
+      <Position>10</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="26" parent="7" name="tags">
+      <Position>11</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="27" parent="7" name="booklists">
+      <Position>12</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <index id="28" parent="7" name="sqlite_autoindex_bookTable_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>ID</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="29" parent="7">
+      <ColNames>ID</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_bookTable_1</UnderlyingIndexName>
+    </key>
+    <column id="30" parent="8" name="name">
+      <Position>1</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="31" parent="8" name="books">
+      <Position>2</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <index id="32" parent="8" name="sqlite_autoindex_booklistTable_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>name</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="33" parent="8">
+      <ColNames>name</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_booklistTable_1</UnderlyingIndexName>
+    </key>
+    <column id="34" parent="9" name="time">
+      <Position>1</Position>
+      <DataType>float|0s</DataType>
+    </column>
+    <column id="35" parent="9" name="content">
+      <Position>2</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <index id="36" parent="9" name="sqlite_autoindex_historyTable_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>content</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="37" parent="9">
+      <ColNames>content</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_historyTable_1</UnderlyingIndexName>
+    </key>
+    <column id="38" parent="10" name="ID">
+      <Position>1</Position>
+      <DataType>int|0s</DataType>
+    </column>
+    <index id="39" parent="10" name="sqlite_autoindex_idTable_1">
+      <NameSurrogate>1</NameSurrogate>
+      <ColNames>ID</ColNames>
+      <ColumnCollations></ColumnCollations>
+      <Unique>1</Unique>
+    </index>
+    <key id="40" parent="10">
+      <ColNames>ID</ColNames>
+      <Primary>1</Primary>
+      <UnderlyingIndexName>sqlite_autoindex_idTable_1</UnderlyingIndexName>
+    </key>
+    <column id="41" parent="11" name="type">
+      <Position>1</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="42" parent="11" name="name">
+      <Position>2</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="43" parent="11" name="tbl_name">
+      <Position>3</Position>
+      <DataType>text|0s</DataType>
+    </column>
+    <column id="44" parent="11" name="rootpage">
+      <Position>4</Position>
+      <DataType>int|0s</DataType>
+    </column>
+    <column id="45" parent="11" name="sql">
+      <Position>5</Position>
+      <DataType>text|0s</DataType>
+    </column>
+  </database-model>
+</dataSource>

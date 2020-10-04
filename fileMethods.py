@@ -2,27 +2,20 @@
 import fitz
 import os
 from classes import *
-
-
-def readInFile(file_path):
-    doc = fitz.open(file_path)
-    name = getTitle(doc)
-    authors = getAuthors(doc)
-    pub_date = getPubDate(doc)
-    createNewBook(name, authors, pub_date)
+import shutil
 
 
 def getTitle(doc):
     if doc.metadata['title']:
         return doc.metadata['title']
     else:
-        name = doc.name[:-4]
+        name = doc.name.split('/')[-1][:-4]
         return name
 
 
 def getAuthors(doc):
     if doc.metadata['author']:
-        authors = parseListString(doc.metadata)
+        authors = parseStrListString(doc.metadata['author'])
         return authors
     else:
         return None
@@ -30,8 +23,33 @@ def getAuthors(doc):
 
 def getPubDate(doc):
     if doc.metadata['creationDate']:
-        return doc.metadata['createDate'][2:10]  # 格式：20200922
+        return doc.metadata['creationDate'][2:10]  # 格式：20200922
     return None
+
+
+def getFilePath(basePath, name, ID, filename):
+    if not os.path.exists(basePath):
+        return
+    os.chdir(basePath)
+    bookPath = os.path.join(basePath, name+"_"+str(ID))
+    print(bookPath)
+    try:
+        os.mkdir(name+"_"+str(ID))
+    except:
+        print("File exists")
+    bookFilePath = shutil.copy(filename, bookPath)
+    print(bookFilePath)
+    return bookPath, bookFilePath
+
+
+def getCover(doc, bookPath):
+    zoom_x = 0.5  # horizontal zoom
+    zomm_y = 0.5  # vertical zoom
+    mat = fitz.Matrix(zoom_x, zomm_y)  # zoom factor 2 in each dimension
+    pix = doc[0].getPixmap(matrix=mat)
+    coverPath = os.path.join(bookPath, "cover.png")
+    pix.writeImage(coverPath)
+    return coverPath
 
 
 def convertToTXT(file_path, to_path):

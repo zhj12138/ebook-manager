@@ -3,6 +3,9 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from mywidgets import *
+from classes import MyDb
+from fileMethods import *
+import os
 
 
 class BookManager(QMainWindow):
@@ -16,18 +19,22 @@ class BookManager(QMainWindow):
         self.treeView = MyTree()
         self.treeView.setMaximumWidth(700)
         self.treeView.setMinimumWidth(200)
+        self.scrollarea = QScrollArea()
         tempwidget = QWidget()
         # tempwidget.setStyleSheet("QLabel{border:2px solid red;}")
-        self.booksView = MyGrid()
+        self.booksView = MyGrid(tempwidget, self.scrollarea)
         self.infoView = MyList()
         self.infoView.setMaximumWidth(700)
         self.infoView.setMinimumWidth(200)
 
-        self.scrollarea = QScrollArea()
+        # self.scrollarea.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        # self.scrollarea.setSizePolicy()
+        self.scrollarea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scrollarea.setMinimumWidth(1000)
         self.scrollarea.setMaximumWidth(1200)
-        tempwidget.setLayout(self.booksView)
+        # tempwidget.setLayout(self.booksView)
         self.scrollarea.setWidget(tempwidget)
+        # self.scrollarea.setLayout(self.booksView)
 
         splitter1 = QSplitter(Qt.Horizontal)
         splitter1.addWidget(self.scrollarea)
@@ -44,6 +51,18 @@ class BookManager(QMainWindow):
         self.mainwidget = QWidget()
         self.mainwidget.setLayout(self.VBox)
         self.setCentralWidget(self.mainwidget)
+
+        self.mainExePath = os.getcwd()
+        self.db = MyDb(os.path.join(self.mainExePath, 'info.db'))
+        self.bookShelfPath = os.path.join(self.mainExePath, "books")
+        # print(self.path)
+
+        # 打开时读取数据
+        books = self.db.getAllBooks()
+        # print("Hello")
+        os.chdir(self.mainExePath)
+        self.booksView.updateView(books)
+        time.sleep(1)
 
         self.setWindowTitle("图书管理系统")
         desktop = QApplication.desktop()
@@ -69,7 +88,23 @@ class BookManager(QMainWindow):
         self.toolbar.setting.triggered.connect(self.setSetting)
 
     def addBook(self):
-        pass
+        os.chdir(self.mainExePath)
+        filename, _ = QFileDialog.getOpenFileName(self, "选择文件", ".", "PDF file(*.pdf)")
+        if filename:
+            doc = fitz.open(filename)
+            name = getTitle(doc)
+            authors = getAuthors(doc)
+            pub_date = getPubDate(doc)
+            book_path, file_path = getFilePath(self.bookShelfPath, name, self.db.getID(), filename)
+            cover_path = getCover(doc, book_path)
+            self.db.createNewBook(name, authors, pub_date, file_path=file_path, cover_path=cover_path)
+            # print("Hi")
+            books = self.db.getAllBooks()
+            # print("Hello")
+            os.chdir(self.mainExePath)
+            self.booksView.updateView(books)
+            time.sleep(1)
+            # print("Hi")
 
     def inBook(self):
         pass

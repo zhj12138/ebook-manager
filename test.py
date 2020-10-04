@@ -1,5 +1,5 @@
 # 这个是测试模块
-from classes import createNewBook, DataBase
+# from classes import createNewBook, MyDb
 # DataBase.createBookTable()
 # DataBase.createAuthorTable()
 # DataBase.createBooklistTable()
