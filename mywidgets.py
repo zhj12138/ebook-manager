@@ -216,6 +216,7 @@ class MyGrid(QGridLayout):
         # print(sender.pixmap().)
 
 
+
 class MyList(QWidget):
     def __init__(self):
         super(MyList, self).__init__()
