@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import *
 from basic import strListToString, email_to
 from classes import Book
 from typing import List
-
+import heapq
 from mydatabase import MyDb
 
 
@@ -139,9 +139,14 @@ class MyToolBar(QToolBar):
         self.toKindle.clear()
         for mail in emails:
             action = QAction(mail, self)
-            action.triggered.connect(lambda: self.sendMail(mail))
+            # action.triggered.connect(lambda: self.sendMail(action.text()))
             self.toKindle.addAction(action)
         self.toKindle.addAction(self.inputEmail)
+        self.toKindle.triggered.connect(self.menuClicked)
+
+    def menuClicked(self, action):
+        if action.text() != "添加Kindle邮箱":
+            self.sendMail(action.text())
 
     def sendMail(self, mail):
         if mail:
@@ -459,11 +464,20 @@ class MySearch(QToolBar):
         self.inputLine.setPlaceholderText("选择搜索模式后，在此输入关键词")
         self.searchAct = QAction(QIcon("img/search-4.png"), "搜索", self)
         self.highSearchAct = QAction(QIcon('img/hsearch-1.png'), "高级搜索", self)
-        self.historySearchAct = QAction(QIcon('img/history-1.png'), "历史搜索", self)
+        # self.historySearchAct = QAction(QIcon('img/history-1.png'), "历史搜索", self)
+        self.historyMenu = QMenu()
+        self.historyMenu.setFont(QFont("", 14))
+        self.historyBtn = QToolButton()
+        self.historyBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.historyBtn.setText("历史搜索")
+        self.historyBtn.setMenu(self.historyMenu)
+        self.historyBtn.setIcon(QIcon('img/history-1.png'))
+        self.historyBtn.setPopupMode(QToolButton.InstantPopup)
+        self.updateHistory()
 
         self.searchAct.triggered.connect(self.onSearch)
         self.highSearchAct.triggered.connect(self.onHighSearch)
-        self.historySearchAct.triggered.connect(self.onHistory)
+        # self.historySearchAct.triggered.connect(self.onHistory)
 
         self.addWidget(self.searchModeLabel)
         self.addWidget(self.searchBy)
@@ -472,12 +486,15 @@ class MySearch(QToolBar):
         self.addWidget(self.inputLine)
         self.addAction(self.searchAct)
         self.addSeparator()
-        self.addActions([self.highSearchAct, self.historySearchAct])
+        self.addActions([self.highSearchAct])
+        self.addWidget(self.historyBtn)
 
     def onSearch(self):
         books = self.db.getAllBooks()
         keyword = self.inputLine.text()
         if keyword:
+            self.db.addAHistory(keyword)
+            self.updateHistory()
             if self.searchAttr == '按书名':
                 if self.searchAttrMode == '准确匹配':
                     books = [book for book in books if book.name == keyword]
@@ -525,8 +542,21 @@ class MySearch(QToolBar):
     def onHighSearch(self):
         pass
 
-    def onHistory(self):
-        pass
+    def updateHistory(self):
+        self.historyMenu.clear()
+        histories = self.db.getAllHistory()
+        recentTen = heapq.nlargest(10, histories)
+        for his in recentTen:
+            t, content = his
+            # print(content)
+            action = QAction(content, self.historyMenu)
+            # action.triggered.connect(lambda: self.historyClicked(action.text()))
+            self.historyMenu.addAction(action)
+        self.historyMenu.triggered.connect(self.historyClicked)
+
+    def historyClicked(self, action):
+        self.inputLine.setText(action.text())
+        # print(action.text())
 
     def changeAttr(self, attr):
         self.searchAttr = attr

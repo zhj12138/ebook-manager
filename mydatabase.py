@@ -178,15 +178,17 @@ class MyDb:
             return None
         return booklists[0]
 
-    # 获取所有的历史记录，返回一个History列表
-    def getAllHistory(self, history):
+    # 获取所有的历史记录，返回一个(time, content)列表
+    def getAllHistory(self):
         self.connect()
+        histories = []
         ret = self.cursor.execute('select * from %s' % self.history_table)
         for row in ret:
             t = row[0]
             content = row[1]
-            history.histories.append((t, content))
+            histories.append((t, content))
         self.close()
+        return histories
 
     # 获取所有作者
     def getAllAuthors(self):
@@ -306,9 +308,9 @@ class MyDb:
             return False
         return True
 
-    def addHistory(self, now, content):
+    def addHistory(self, curtime, content):
         self.connect()
-        self.cursor.execute("insert into %s values(%s, '%s')" % (self.history_table, now, content))
+        self.cursor.execute("insert into %s values(%s, '%s')" % (self.history_table, curtime, content))
         self.close()
 
     def deleteHistory(self, content):
@@ -316,9 +318,9 @@ class MyDb:
         self.cursor.execute("delete from %s where content='%s'" % (self.history_table, content))
         self.close()
 
-    def updateHistory(self, now, content):
+    def updateHistory(self, curtime, content):
         self.connect()
-        self.cursor.execute("update %s set time=%s where content='%s'" % (self.history_table, now, content))
+        self.cursor.execute("update %s set time=%s where content='%s'" % (self.history_table, curtime, content))
         self.close()
 
     def booklistInDB(self, booklist):
@@ -354,7 +356,7 @@ class MyDb:
                     bookLists)
         self.addBook(book)
         if authors:
-            print(authors)
+            # print(authors)
             book.setAuthors(self, authors)
         # self.addBook(book)
         # return book
@@ -369,11 +371,11 @@ class MyDb:
 
     # 不提供主动新建作者的方法
     def addAHistory(self, content):
-        now = time.time()
+        curtime = time.time()
         if self.historyInDB(content):
-            self.updateHistory(now, content)
+            self.updateHistory(curtime, content)
         else:
-            self.addHistory(time, content)
+            self.addHistory(curtime, content)
 
     def deleteAHistory(self, content):
         self.deleteHistory(content)

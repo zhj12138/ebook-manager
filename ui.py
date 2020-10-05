@@ -33,8 +33,6 @@ class BookManager(QMainWindow):
         # self.infoView.setMaximumWidth(700)
         # self.infoView.setMinimumWidth(200)
 
-        # self.importfiledialog = None
-
         # self.scrollarea.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         # self.scrollarea.setSizePolicy()
         self.scrollarea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)

@@ -8,6 +8,7 @@ import win32api
 import win32con
 from PyQt5.QtCore import QMimeData, QUrl
 from PyQt5.QtWidgets import QApplication
+import os
 
 
 def parseStrListString(input_str):
@@ -87,15 +88,16 @@ def email_to(file_path, address):
     server.login(from_address, passwd)
 
     msg = MIMEMultipart()
-    filename = file_path
-    subject = filename.split('/')[-1][:-4]
+    path, filename = os.path.split(file_path)
+    pre, suf = filename.split('.')
+    # subject = filename.split('/')[-1][:-4]
 
-    msg['Subject'] = Header(subject)
+    msg['Subject'] = Header(pre)
     msg['From'] = Header(from_address)
     msg['To'] = Header(to_address)
 
-    part = MIMEApplication(open(filename, 'rb').read())
-    part.add_header('Content-Disposition', 'attachment', filename=filename.split('/')[-1])
+    part = MIMEApplication(open(file_path, 'rb').read())
+    part.add_header('Content-Disposition', 'attachment', filename=filename)
     msg.attach(part)
     try:
         server.sendmail(from_address, to_address, msg.as_string())
