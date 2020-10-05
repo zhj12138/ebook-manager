@@ -1,14 +1,9 @@
 # 此文件为UI程序
-import time
-
-from PyQt5.QtCore import QUrl
-from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from mywidgets import *
-from mydatabase import MyDb
-from fileMethods import *
-import os
 from mydialogs import *
+from mythreads import *
+from basic import *
 
 
 class BookManager(QMainWindow):
@@ -22,7 +17,7 @@ class BookManager(QMainWindow):
         self.db = MyDb(os.path.join(self.mainExePath, 'info.db'))
         self.bookShelfPath = os.path.join(self.mainExePath, "books")
 
-        self.searchLine = MySearch()
+        self.searchLine = MySearch(self.db)
         self.treeView = MyTree(self.db)
         self.treeView.itemClickedSignal.connect(self.onTreeItemClicked)
         self.treeView.setMaximumWidth(1000)
@@ -38,7 +33,7 @@ class BookManager(QMainWindow):
         # self.infoView.setMaximumWidth(700)
         # self.infoView.setMinimumWidth(200)
 
-        self.importfiledialog = None
+        # self.importfiledialog = None
 
         # self.scrollarea.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         # self.scrollarea.setSizePolicy()
@@ -72,7 +67,11 @@ class BookManager(QMainWindow):
         os.chdir(self.mainExePath)
         self.booksView.updateView(self.curShowBooks)
         self.updateTreeView()
+        emails = self.db.getAllKindleMail()
+        self.toolbar.updateKindleEmail(emails)
+        self.searchLine.updateBookViewSignal.connect(self.updateBySearch)
         # time.sleep(1)
+
         QToolTip.setFont(QFont("", 14))
         self.setWindowTitle("图书管理系统")
         desktop = QApplication.desktop()
@@ -86,18 +85,26 @@ class BookManager(QMainWindow):
         self.toolbar.inbook.triggered.connect(self.inBook)
         self.toolbar.editbook.triggered.connect(self.editBook)
         self.toolbar.sortBtn.clicked.connect(self.sortBooks)
-        self.toolbar.highSort.triggered.connect(self.HighSort)
+        # self.toolbar.highSort.triggered.connect(self.HighSort)
         self.toolbar.readbook.triggered.connect(self.readBook)
-        self.toolbar.convertbook.triggered.connect(self.convertBook)
+        # self.toolbar.convertbook.triggered.connect(self.convertBook)
+        self.toolbar.outAsTxt.triggered.connect(self.outAsTxt)
+        self.toolbar.outAsDocx.triggered.connect(self.outAsDocx)
+        self.toolbar.outAsHtml.triggered.connect(self.outAsHtml)
         self.toolbar.deletebook.triggered.connect(self.deleteBook)
         self.toolbar.booklist.triggered.connect(self.addBookList)
         self.toolbar.bookshelf.triggered.connect(self.openBookShelf)
         self.toolbar.export.triggered.connect(self.export)
-        self.toolbar.share.triggered.connect(self.share)
+        # self.toolbar.share.triggered.connect(self.share)
+        self.toolbar.toQQByFile.triggered.connect(self.toQQByFile)
+        self.toolbar.toQQByPic.triggered.connect(self.toQQByPic)
+        self.toolbar.toWeChatByFile.triggered.connect(self.toWeChatByFile)
+        self.toolbar.toWeChatByPic.triggered.connect(self.toWeChatByPic)
         self.toolbar.star.triggered.connect(self.giveusStar)
         # self.toolbar.gethelp.triggered.connect(self.getHelp)
         self.toolbar.setting.triggered.connect(self.setSetting)
         self.toolbar.sortModeChangedSignal.connect(self.sortBooks)
+        self.toolbar.sendBackMail.connect(self.sendMail)
 
     def addBook(self):
         os.chdir(self.mainExePath)
@@ -147,9 +154,9 @@ class BookManager(QMainWindow):
     #         self.booksView.updateView(self.curShowBooks)
 
     def inBook(self):
-        self.importfiledialog = ImportFileDialog(self.bookShelfPath, self.db, self)
-        self.importfiledialog.finishSignal.connect(self.onInBook)
-        self.importfiledialog.show()
+        dig = ImportFileDialog(self.bookShelfPath, self.db, self)
+        dig.finishSignal.connect(self.onInBook)
+        # self.importfiledialog.show()
 
     def onInBook(self, pdfFilePath, name, authors, language, rating):
         doc = fitz.open(pdfFilePath)
@@ -162,7 +169,7 @@ class BookManager(QMainWindow):
         os.chdir(self.mainExePath)
         self.booksView.updateView(self.curShowBooks)
         self.updateTreeView()
-        self.importfiledialog.close()
+        # self.importfiledialog.close()
 
     def editBook(self):
         if not self.booksView.lastActive:
@@ -176,6 +183,7 @@ class BookManager(QMainWindow):
     def onDataChanged(self, ID):
         self.updateTreeView()
         self.updateInfo(ID)
+        self.searchLine.changeAttr(self.searchLine.searchAttr)
 
     def sortBooks(self):
         if self.toolbar.sortMode == 'name':
@@ -221,16 +229,48 @@ class BookManager(QMainWindow):
                 self.curShowBooks = books
         self.booksView.updateView(self.curShowBooks)
 
-    def HighSort(self):
-        pass
+    # def HighSort(self):
+    #     pass
 
     def readBook(self):
         if self.booksView.lastActive:
             book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
             os.startfile(book.file_path)
 
-    def convertBook(self):
-        pass
+    def outAsTxt(self):
+        if self.booksView.lastActive:
+            saveFileName, _ = QFileDialog.getSaveFileName(self, "保存文件", ".", "txt file(*.txt)")
+            if saveFileName:
+                book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
+                t = convertThread(pdfToHtmlorTxt, (book.file_path, saveFileName, "text"))
+                t.finishSignal.connect(lambda: self.onFinishOut(saveFileName))
+                t.start()
+                time.sleep(1)
+
+    def outAsHtml(self):
+        if self.booksView.lastActive:
+            saveFileName, _ = QFileDialog.getSaveFileName(self, "保存文件", ".", "html file(*.html)")
+            if saveFileName:
+                book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
+                t = convertThread(pdfToHtmlorTxt, (book.file_path, saveFileName, "html"))
+                t.finishSignal.connect(lambda: self.onFinishOut(saveFileName))
+                t.start()
+                time.sleep(1)
+
+    def outAsDocx(self):
+        if self.booksView.lastActive:
+            saveFileName, _ = QFileDialog.getSaveFileName(self, "保存文件", ".", "docx file(*.docx)")
+            if saveFileName:
+                book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
+                t = convertThread(pdfToDocx, (book.file_path, saveFileName))
+                t.finishSignal.connect(lambda: self.onFinishOut(saveFileName))
+                t.start()
+                time.sleep(1)
+
+    def onFinishOut(self, savefileName):
+        ret = QMessageBox.question(self, '提示', "转换成功，是否打开文件", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if ret == QMessageBox.Yes:
+            os.startfile(savefileName)
 
     def deleteBook(self):
         if self.booksView.lastActive:
@@ -242,6 +282,10 @@ class BookManager(QMainWindow):
             self.infoView.setDefault()
             # self.booksView.lastActive = None
 
+    def updateBySearch(self, books):
+        self.curShowBooks = books
+        self.booksView.updateView(self.curShowBooks)
+
     def addBookList(self):
         pass
 
@@ -249,9 +293,54 @@ class BookManager(QMainWindow):
         os.startfile(self.bookShelfPath)
 
     def export(self):
+        dig = ExportINFODialog(self.db, self)
+        dig.finishSignal.connect(self.finishExport)
+
+    def finishExport(self, filename):
+        ret = QMessageBox.question(self, '提示', "导出完成，是否打开文件", QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+        if ret == QMessageBox.Yes:
+            os.startfile(filename)
+
+    # def share(self):
+    #     pass
+    def sendMail(self, mail):
+        if not self.db.mailInDB(mail):
+            self.db.addKindleMail(mail)
+            allmails = self.db.getAllKindleMail()
+            self.toolbar.updateKindleEmail(allmails)
+        if not self.booksView.lastActive:
+            QMessageBox.about(self, "提醒", "请先选中一本书")
+            return
+        book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
+        t = EmailThread(email_to, (book.file_path, mail))
+        t.finishSignal.connect(self.finish_mail)
+        t.start()
+        time.sleep(0.8)
+
+    def finish_mail(self, success):
+        if success:
+            QMessageBox.about(self, "提示", "发送成功")
+        else:
+            QMessageBox.about(self, "提示", "抱歉，发送失败，请检查邮箱后再次发送")
+
+    def toQQByFile(self):
+        if self.booksView.lastActive:
+            book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
+            copyFile(book.file_path)
+            QMessageBox.about(self, "提示", "文件已复制到剪贴板")
+            CtrlAltZ()
+
+    def toQQByPic(self):
         pass
 
-    def share(self):
+    def toWeChatByFile(self):
+        if self.booksView.lastActive:
+            book = self.db.getBookByID(self.booksView.dict[self.booksView.lastActive])
+            copyFile(book.file_path)
+            QMessageBox.about(self, "提示", "文件已复制到剪贴板")
+            CtrlAltW()
+
+    def toWeChatByPic(self):
         pass
 
     def giveusStar(self):

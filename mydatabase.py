@@ -13,9 +13,11 @@ class MyDb:
         self.author_table = "authorTable"
         self.history_table = "historyTable"
         self.id_table = "idTable"
+        self.email_table = 'emailTable'
         self.conn = None
         self.cursor = None
         try:
+            self.createEmailTable()
             self.createAuthorTable()
             self.createBookTable()
             self.createHistoryTable()
@@ -31,6 +33,12 @@ class MyDb:
     def close(self):
         self.conn.commit()
         self.conn.close()
+
+    # 新建kindle邮箱表
+    def createEmailTable(self):
+        self.connect()
+        self.cursor.execute("create table %s(mail text primary key )" % self.email_table)
+        self.close()
 
     # 新建书籍表
     def createBookTable(self):
@@ -93,6 +101,32 @@ class MyDb:
         if not books:
             return None
         return books
+
+    def getAllBookRows(self):
+        self.connect()
+        ret = self.cursor.execute('select * from %s' % self.book_table)
+        rows = parseRetBookRows(ret)
+        # print("Ok")
+        self.close()
+        return rows
+
+    def getAllBookNames(self):
+        names = set()
+        self.connect()
+        ret = self.cursor.execute('select * from %s' % self.book_table)
+        for row in ret:
+            names.add(row[1])
+        self.close()
+        return names
+
+    def getAllISBNs(self):
+        isbns = set()
+        self.connect()
+        ret = self.cursor.execute('select * from %s' % self.book_table)
+        for row in ret:
+            isbns.add(row[5])
+        self.close()
+        return isbns
 
     # 传入一个书籍ID，获取该书籍，为Book类型
     def getBookByID(self, ID):
@@ -344,6 +378,32 @@ class MyDb:
     def deleteAHistory(self, content):
         self.deleteHistory(content)
 
+    def getAllKindleMail(self):
+        self.connect()
+        ret = self.cursor.execute("select * from %s" % self.email_table)
+        emailList = []
+        for row in ret:
+            email = row[0]
+            emailList.append(email)
+        self.close()
+        return emailList
+
+    def mailInDB(self, mail):
+        self.connect()
+        ret = self.cursor.execute("select * from %s where mail='%s'" % (self.email_table, mail))
+        tem = []
+        for row in ret:
+            tem.append(row)
+        self.close()
+        if not tem:
+            return False
+        return True
+
+    def addKindleMail(self, email):
+        self.connect()
+        self.cursor.execute("insert into %s values ('%s')" % (self.email_table, email))
+        self.close()
+
 
 def parseRetBooks(ret):
     books = []
@@ -364,6 +424,25 @@ def parseRetBooks(ret):
                     booklists)
         books.append(book)
     return books
+
+
+def parseRetBookRows(ret):
+    rows = []
+    for row in ret:
+        name = row[1]
+        authors = row[2]
+        pub_date = row[3]
+        publisher = row[4]
+        isbn = row[5]
+        language = row[6]
+        cover_path = row[7]
+        rating = row[8]
+        file_path = row[9]
+        tags = row[10]
+        booklists = row[11]
+        rows.append((name, authors, pub_date, publisher, isbn, language, file_path, cover_path, rating, tags,
+                     booklists))
+    return rows
 
 
 def parseRetBooklists(ret):

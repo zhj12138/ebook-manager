@@ -171,32 +171,37 @@ class ImportFileDialog(QDialog):
         self.finishSignal.emit(pdfFilePath, name, authors, language, rating)
 
 
-class HighSortDialog(QDialog):
-    finishSignal = pyqtSignal()
-
-    def __init__(self, parent=None):
-        super(HighSortDialog, self).__init__(parent)
-
-
-class ConvertFileDialog(QDialog):
-    finishSignal = pyqtSignal()
-
-    def __init__(self, parent=None):
-        super(ConvertFileDialog, self).__init__(parent)
+# class HighSortDialog(QDialog):
+#     finishSignal = pyqtSignal()
+#
+#     def __init__(self, parent=None):
+#         super(HighSortDialog, self).__init__(parent)
 
 
-class ExportFileDialog(QDialog):
-    finishSignal = pyqtSignal()
+# class ConvertFileDialog(QDialog):
+#     finishSignal = pyqtSignal()
+#
+#     def __init__(self, parent=None):
+#         super(ConvertFileDialog, self).__init__(parent)
 
-    def __init__(self, parent=None):
-        super(ExportFileDialog, self).__init__(parent)
 
+class ExportINFODialog(QDialog):
+    finishSignal = pyqtSignal(str)
 
-class ShareDialog(QDialog):
-    finishSignal = pyqtSignal()
+    def __init__(self, db: MyDb, parent=None):
+        super(ExportINFODialog, self).__init__(parent)
+        self.db = db
+        file_name, _ = QFileDialog.getSaveFileName(self, "保存文件", ".", "csv file(*.csv)")
+        if file_name:
+            rows = self.db.getAllBookRows()
+            headers = ['书名', '作者', '出版日期', '出版社', 'ISBN', '语言', '文件路径', '封面路径', '评分', '标签', '书单']
+            t = convertThread(toCSV, (file_name, headers, rows))
+            t.finishSignal.connect(lambda: self.FinishExport(file_name))
+            t.start()
+            time.sleep(1)
 
-    def __init__(self, parent=None):
-        super(ShareDialog, self).__init__(parent)
+    def FinishExport(self, filename):
+        self.finishSignal.emit(filename)
 
 
 class SettingDialog(QDialog):

@@ -1,4 +1,6 @@
 # 此文件存储核心的类和和类相关的方法
+import re
+
 from basic import strListToString
 import fitz
 from collections import deque
@@ -100,6 +102,42 @@ class Book:
         path, file = os.path.split(self.file_path)
         shutil.rmtree(path)
         db.deleteBook(self.ID)
+
+    def hasAnthorFuzzy(self, author_name):  # 模糊搜索
+        for author in self.authors:
+            if author_name in author:
+                return True
+        return False
+
+    def hasAuthorRegExp(self, author_name):
+        for author in self.authors:
+            if re.match(author_name, author):
+                return True
+        return False
+
+    def inBooklistFuzzy(self, booklist_name):
+        for booklist in self.bookLists:
+            if booklist_name in booklist:
+                return True
+        return False
+
+    def inBooklistRegExp(self, booklist_name):
+        for booklist in self.bookLists:
+            if re.match(booklist_name, booklist):
+                return True
+        return False
+
+    def hasTagFuzzy(self, tag_name):
+        for tag in self.tags:
+            if tag_name in tag:
+                return True
+        return False
+
+    def hasTagRegExp(self, tag_name):
+        for tag in self.tags:
+            if re.match(tag_name, tag):
+                return True
+        return False
 
     # 打开当前书籍
     def openBook(self):

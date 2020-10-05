@@ -1,12 +1,13 @@
 import os
+import re
 from math import floor, ceil
 
 from PyQt5 import QtGui
-from PyQt5.QtCore import QSize, Qt, pyqtSignal
+from PyQt5.QtCore import QSize, Qt, pyqtSignal, QAbstractItemModel, QStringListModel
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QMouseEvent
 from PyQt5.QtWidgets import *
 
-from basic import strListToString
+from basic import strListToString, email_to
 from classes import Book
 from typing import List
 
@@ -18,6 +19,7 @@ Books = List[Book]
 
 class MyToolBar(QToolBar):
     sortModeChangedSignal = pyqtSignal()
+    sendBackMail = pyqtSignal(str)
 
     def __init__(self):
         super(MyToolBar, self).__init__()
@@ -26,17 +28,17 @@ class MyToolBar(QToolBar):
         self.setFont(QFont("", 15))
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.addbook = QAction(QIcon('img/add-2.png'), "添加书籍", self)
-        self.inbook = QAction(QIcon('img/import-6.png'), "导入", self)
+        self.inbook = QAction(QIcon('img/import-6.png'), "导入文件", self)
         self.editbook = QAction(QIcon('img/edit-5.png'), "编辑元数据", self)
         # self.sortbooks = QAction(QIcon('img/sortUp-2.png'), "排序", self)
-        self.highSort = QAction(QIcon('img/sort-7.png'), "高级排序", self)
+        # self.highSort = QAction(QIcon('img/sort-7.png'), "高级排序", self)
         self.readbook = QAction(QIcon('img/read-2.png'), "阅读书籍", self)
-        self.convertbook = QAction(QIcon('img/convert-1.png'), "转换书籍", self)
+        # self.convertbook = QAction(QIcon('img/convert-1.png'), "转换书籍", self)
         self.deletebook = QAction(QIcon('img/delete-4.png'), "移除书籍", self)
         self.booklist = QAction(QIcon('img/booklist-2.png'), "创建书单", self)
         self.bookshelf = QAction(QIcon('img/bookshelf.png'), "打开书库", self)
-        self.export = QAction(QIcon('img/export-1.png'), "导出", self)
-        self.share = QAction(QIcon('img/share-7.png'), "分享", self)
+        self.export = QAction(QIcon('img/export-1.png'), "导出信息", self)
+        # self.share = QAction(QIcon('img/share-7.png'), "分享", self)
         self.star = QAction(QIcon('img/star-1.png'), "支持我们", self)
         self.gethelp = QAction(QIcon("img/help-2.png"), "帮助", self)
         self.setting = QAction(QIcon("img/setting-3.png"), "设置", self)
@@ -59,29 +61,91 @@ class MyToolBar(QToolBar):
         self.sortMenu.addActions([self.sortByName, self.sortByAuthor, self.sortByPublisher, self.sortByPubDate,
                                   self.sortByRating])
         self.sortBtn = QToolButton()
+        self.sortBtn.setText("排序")
+        self.sortBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         self.sortBtn.setIcon(QIcon('img/sortUp-2.png'))
-        # self.sortBtn.setIconSize(QSize(200, 200))
         self.sortBtn.setMenu(self.sortMenu)
         self.sortBtn.setPopupMode(QToolButton.MenuButtonPopup)
+
+        self.outAsHtml = QAction("导出为HTML", self)
+        self.outAsTxt = QAction("导出为TXT", self)
+        self.outAsDocx = QAction("导出为docx", self)
+
+        self.outMenu = QMenu()
+        self.outMenu.setFont(QFont("", 14))
+        self.outMenu.addActions([self.outAsHtml, self.outAsDocx, self.outAsTxt])
+        self.outBtn = QToolButton()
+        self.outBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.outBtn.setText("格式转换")
+        self.outBtn.setMenu(self.outMenu)
+        self.outBtn.setIcon(QIcon('img/convert-1.png'))
+        self.outBtn.setPopupMode(QToolButton.InstantPopup)
+
+        self.shareMenu = QMenu()
+        self.shareMenu.setFont(QFont("", 14))
+        self.toKindle = self.shareMenu.addMenu("发送到kindle")
+        self.toKindle.setFont(QFont("", 14))
+        self.inputEmail = QAction("添加Kindle邮箱", self)
+        self.inputEmail.triggered.connect(self.inputMail)
+        self.toQQ = self.shareMenu.addMenu("分享到QQ")
+        self.toQQ.setFont(QFont("", 14))
+        self.toWeChat = self.shareMenu.addMenu("分享到微信")
+        self.toWeChat.setFont(QFont("", 14))
+        self.toQQByPic = QAction("分享图片", self)
+        self.toQQByFile = QAction("分享文件", self)
+        self.toWeChatByPic = QAction("分享图片", self)
+        self.toWeChatByFile = QAction("分享文件", self)
+        self.toQQ.addActions([self.toQQByPic, self.toQQByFile])
+        self.toWeChat.addActions([self.toWeChatByPic, self.toWeChatByFile])
+        self.shareBtn = QToolButton()
+        self.shareBtn.setIcon(QIcon('img/share-7.png'))
+        self.shareBtn.setText("分享")
+        self.shareBtn.setMenu(self.shareMenu)
+        self.shareBtn.setPopupMode(QToolButton.InstantPopup)
+        self.shareBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
 
         self.addActions([self.addbook, self.inbook])
         self.addSeparator()
         self.addActions([self.editbook])
         self.addWidget(self.sortBtn)
-        self.addActions([self.highSort])
-        # self.addWidget(self.mBtn)
+        # self.addActions([self.highSort])
         self.addSeparator()
-        self.addActions([self.readbook, self.convertbook, self.deletebook])
+        self.addActions([self.readbook])
+        self.addWidget(self.outBtn)
+        self.addActions([self.deletebook])
         self.addSeparator()
         self.addActions([self.booklist, self.bookshelf])
         self.addSeparator()
-        self.addActions([self.export, self.share, self.star])
+        self.addActions([self.export])
+        self.addWidget(self.shareBtn)
+        self.addActions([self.star])
         self.addSeparator()
         self.addActions([self.setting])
 
     def changeSortMode(self, attr: str):
         self.sortMode = attr
         self.sortModeChangedSignal.emit()
+
+    def inputMail(self):
+        mail, ok = QInputDialog.getText(self, "输入邮箱", "请输入邮箱")
+        if ok:
+            pat = re.compile(r'^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$')
+            if pat.match(mail):
+                self.sendMail(mail)
+            else:
+                QMessageBox.about(self, "提醒", "请输入合法邮箱")
+
+    def updateKindleEmail(self, emails):
+        self.toKindle.clear()
+        for mail in emails:
+            action = QAction(mail, self)
+            action.triggered.connect(lambda: self.sendMail(mail))
+            self.toKindle.addAction(action)
+        self.toKindle.addAction(self.inputEmail)
+
+    def sendMail(self, mail):
+        if mail:
+            self.sendBackMail.emit(mail)
 
 
 class MyTree(QTreeWidget):
@@ -362,17 +426,36 @@ class MyList(QVBoxLayout):
 
 
 class MySearch(QToolBar):
-    def __init__(self):
+    updateBookViewSignal = pyqtSignal(list)
+
+    def __init__(self, db: MyDb):
         super(MySearch, self).__init__()
+        self.db = db
         self.setFont(QFont("", 15))
         self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.searchModeLabel = QLabel("搜索模式")
         self.searchBy = QComboBox()
         # self.searchBy.setStyleSheet("background-color:white")
         self.searchBy.addItems(['按书名', '按作者', '按书单', '按标签', '按出版社', '按ISBN'])
+        self.searchAttr = self.searchBy.currentText()
+        self.searchBy.currentTextChanged.connect(self.changeAttr)
         self.searchMode = QComboBox()
         self.searchMode.addItems(['准确匹配', '模糊匹配', '正则匹配'])
+        self.searchAttrMode = self.searchMode.currentText()
+        self.searchMode.currentTextChanged.connect(self.changeAttrMode)
         self.inputLine = QLineEdit()
+        self.inputLine.returnPressed.connect(self.onSearch)  # 开始搜索
+        self.inputCompleter = QCompleter()
+
+        # 初始化
+        model = QStringListModel()
+        booknames = self.db.getAllBookNames()
+        # print(booknames)
+        model.setStringList(booknames)
+        self.inputCompleter.setModel(model)
+        self.inputCompleter.setFilterMode(Qt.MatchExactly)
+        self.inputLine.setCompleter(self.inputCompleter)
+        self.inputCompleter.popup().setFont(QFont("", 14))
         self.inputLine.setPlaceholderText("选择搜索模式后，在此输入关键词")
         self.searchAct = QAction(QIcon("img/search-4.png"), "搜索", self)
         self.highSearchAct = QAction(QIcon('img/hsearch-1.png'), "高级搜索", self)
@@ -392,10 +475,92 @@ class MySearch(QToolBar):
         self.addActions([self.highSearchAct, self.historySearchAct])
 
     def onSearch(self):
-        pass
+        books = self.db.getAllBooks()
+        keyword = self.inputLine.text()
+        if keyword:
+            if self.searchAttr == '按书名':
+                if self.searchAttrMode == '准确匹配':
+                    books = [book for book in books if book.name == keyword]
+                elif self.searchAttrMode == '模糊匹配':
+                    books = [book for book in books if keyword in book.name]
+                else:  # 正则匹配
+                    books = [book for book in books if re.match(keyword, book.name)]
+            elif self.searchAttr == '按作者':
+                if self.searchAttrMode == '准确匹配':
+                    books = [book for book in books if keyword in book.authors]
+                elif self.searchAttrMode == '模糊匹配':
+                    books = [book for book in books if book.hasAnthorFuzzy(keyword)]
+                else:  # 正则匹配
+                    books = [book for book in books if book.hasAuthorRegExp(keyword)]
+            elif self.searchAttr == '按书单':
+                if self.searchAttrMode == '准确匹配':
+                    books = [book for book in books if keyword in book.bookLists]
+                elif self.searchAttrMode == '模糊匹配':
+                    books = [book for book in books if book.inBooklistFuzzy(keyword)]
+                else:  # 正则匹配
+                    books = [book for book in books if book.inBooklistRegExp(keyword)]
+            elif self.searchAttr == '按标签':
+                if self.searchAttrMode == '准确匹配':
+                    books = [book for book in books if keyword in book.authors]
+                elif self.searchAttrMode == '模糊匹配':
+                    books = [book for book in books if book.hasTagFuzzy(keyword)]
+                else:  # 正则匹配
+                    books = [book for book in books if book.hasTagRegExp(keyword)]
+            elif self.searchAttr == '按出版社':
+                if self.searchAttrMode == '准确匹配':
+                    books = [book for book in books if book.publisher == keyword]
+                elif self.searchAttrMode == '模糊匹配':
+                    books = [book for book in books if keyword in book.publisher]
+                else:  # 正则匹配
+                    books = [book for book in books if re.match(keyword, book.publisher)]
+            else:  # 按ISBN
+                if self.searchAttrMode == '准确匹配':
+                    books = [book for book in books if book.isbn == keyword]
+                elif self.searchAttrMode == '模糊匹配':
+                    books = [book for book in books if keyword in book.isbn]
+                else:  # 正则匹配
+                    books = [book for book in books if re.match(keyword, book.isbn)]
+        self.updateBookViewSignal.emit(books)
 
     def onHighSearch(self):
         pass
 
     def onHistory(self):
         pass
+
+    def changeAttr(self, attr):
+        self.searchAttr = attr
+        model = QStringListModel()
+        if attr == '按书名':
+            booknames = self.db.getAllBookNames()
+            model.setStringList(booknames)
+        elif attr == '按作者':
+            authors = {author.name for author in self.db.getAllAuthors()}
+            model.setStringList(authors)
+        elif attr == '按书单':
+            booklists = {booklist.name for booklist in self.db.getAllBookLists()}
+            model.setStringList(booklists)
+        elif attr == '按标签':
+            tags = self.db.getAllTags()
+            model.setStringList(tags)
+        elif attr == '按出版社':
+            publishers = self.db.getAllPublishers()
+            model.setStringList(publishers)
+        else:  # 按ISBN
+            isbns = self.db.getAllISBNs()
+            model.setStringList(isbns)
+        self.inputCompleter.setModel(model)
+
+    def changeAttrMode(self, attrMode):
+        self.searchAttrMode = attrMode
+        if attrMode == '准确匹配':
+            self.inputCompleter.setFilterMode(Qt.MatchExactly)
+        elif attrMode == '模糊匹配':
+            self.inputCompleter.setFilterMode(Qt.MatchContains)
+        # else:  # 正则匹配
+        #     self.inputCompleter.setFilterMode(Qt.MatchRegExp)
+
+
+
+
+

@@ -8,6 +8,7 @@ import pdfkit
 import markdown
 import win32com.client as win32
 from pdf2docx import parse
+import csv
 
 
 def getTitle(doc):
@@ -194,3 +195,10 @@ def pdfToDocx(file_path, to_path):
     doc = fitz.open(file_path)
     count = doc.pageCount
     parse(file_path, to_path, start=0, end=count - 1)
+
+
+def toCSV(filename, headers, rows):
+    with open(filename, 'w') as f:
+        f_csv = csv.writer(f)
+        f_csv.writerow(headers)
+        f_csv.writerows(rows)
