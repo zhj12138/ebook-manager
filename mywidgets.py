@@ -4,8 +4,7 @@ from math import floor, ceil
 from PyQt5 import QtGui
 from PyQt5.QtCore import QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QMouseEvent
-from PyQt5.QtWidgets import QTreeWidget, QTableWidget, QListWidget, QToolBar, QTreeWidgetItem, QAction, QGridLayout, \
-    QLabel, QPushButton, QTableWidgetItem, QWidget, QFormLayout, QFrame, QVBoxLayout, QComboBox, QLineEdit, QScrollArea
+from PyQt5.QtWidgets import *
 
 from basic import strListToString
 from classes import Book
@@ -18,6 +17,8 @@ Books = List[Book]
 
 
 class MyToolBar(QToolBar):
+    sortModeChangedSignal = pyqtSignal()
+
     def __init__(self):
         super(MyToolBar, self).__init__()
         self.setMinimumSize(QSize(200, 200))
@@ -27,7 +28,7 @@ class MyToolBar(QToolBar):
         self.addbook = QAction(QIcon('img/add-2.png'), "添加书籍", self)
         self.inbook = QAction(QIcon('img/import-6.png'), "导入", self)
         self.editbook = QAction(QIcon('img/edit-5.png'), "编辑元数据", self)
-        self.sortbooks = QAction(QIcon('img/sortUp-2.png'), "排序", self)
+        # self.sortbooks = QAction(QIcon('img/sortUp-2.png'), "排序", self)
         self.highSort = QAction(QIcon('img/sort-7.png'), "高级排序", self)
         self.readbook = QAction(QIcon('img/read-2.png'), "阅读书籍", self)
         self.convertbook = QAction(QIcon('img/convert-1.png'), "转换书籍", self)
@@ -37,12 +38,38 @@ class MyToolBar(QToolBar):
         self.export = QAction(QIcon('img/export-1.png'), "导出", self)
         self.share = QAction(QIcon('img/share-7.png'), "分享", self)
         self.star = QAction(QIcon('img/star-1.png'), "支持我们", self)
-        # self.gethelp = QAction(QIcon("img/help-2.png"), "帮助", self)
+        self.gethelp = QAction(QIcon("img/help-2.png"), "帮助", self)
         self.setting = QAction(QIcon("img/setting-3.png"), "设置", self)
+
+        self.sortMode = "name"
+        self.sortByName = QAction("按书名排序", self)
+        self.sortByAuthor = QAction("按作者排序", self)
+        self.sortByPublisher = QAction("按出版社排序", self)
+        self.sortByPubDate = QAction("按出版时间排序", self)
+        self.sortByRating = QAction("按评分排序", self)
+
+        self.sortByName.triggered.connect(lambda: self.changeSortMode("name"))
+        self.sortByAuthor.triggered.connect(lambda: self.changeSortMode("author"))
+        self.sortByPublisher.triggered.connect(lambda: self.changeSortMode("publisher"))
+        self.sortByPubDate.triggered.connect(lambda: self.changeSortMode("pub_date"))
+        self.sortByRating.triggered.connect(lambda: self.changeSortMode("rating"))
+
+        self.sortMenu = QMenu()
+        self.sortMenu.setFont(QFont("", 14))
+        self.sortMenu.addActions([self.sortByName, self.sortByAuthor, self.sortByPublisher, self.sortByPubDate,
+                                  self.sortByRating])
+        self.sortBtn = QToolButton()
+        self.sortBtn.setIcon(QIcon('img/sortUp-2.png'))
+        # self.sortBtn.setIconSize(QSize(200, 200))
+        self.sortBtn.setMenu(self.sortMenu)
+        self.sortBtn.setPopupMode(QToolButton.MenuButtonPopup)
 
         self.addActions([self.addbook, self.inbook])
         self.addSeparator()
-        self.addActions([self.editbook, self.sortbooks, self.highSort])
+        self.addActions([self.editbook])
+        self.addWidget(self.sortBtn)
+        self.addActions([self.highSort])
+        # self.addWidget(self.mBtn)
         self.addSeparator()
         self.addActions([self.readbook, self.convertbook, self.deletebook])
         self.addSeparator()
@@ -51,6 +78,10 @@ class MyToolBar(QToolBar):
         self.addActions([self.export, self.share, self.star])
         self.addSeparator()
         self.addActions([self.setting])
+
+    def changeSortMode(self, attr: str):
+        self.sortMode = attr
+        self.sortModeChangedSignal.emit()
 
 
 class MyTree(QTreeWidget):
@@ -336,10 +367,13 @@ class MySearch(QToolBar):
         self.setFont(QFont("", 15))
         self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.searchModeLabel = QLabel("搜索模式")
+        self.searchBy = QComboBox()
+        # self.searchBy.setStyleSheet("background-color:white")
+        self.searchBy.addItems(['按书名', '按作者', '按书单', '按标签', '按出版社', '按ISBN'])
         self.searchMode = QComboBox()
-        self.searchMode.addItems(['普通模式', '正则表达式'])
+        self.searchMode.addItems(['准确匹配', '模糊匹配', '正则匹配'])
         self.inputLine = QLineEdit()
-        self.inputLine.setPlaceholderText("请输入您想要查找的书名")
+        self.inputLine.setPlaceholderText("选择搜索模式后，在此输入关键词")
         self.searchAct = QAction(QIcon("img/search-4.png"), "搜索", self)
         self.highSearchAct = QAction(QIcon('img/hsearch-1.png'), "高级搜索", self)
         self.historySearchAct = QAction(QIcon('img/history-1.png'), "历史搜索", self)
@@ -349,6 +383,7 @@ class MySearch(QToolBar):
         self.historySearchAct.triggered.connect(self.onHistory)
 
         self.addWidget(self.searchModeLabel)
+        self.addWidget(self.searchBy)
         self.addWidget(self.searchMode)
         self.addSeparator()
         self.addWidget(self.inputLine)

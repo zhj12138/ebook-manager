@@ -1,10 +1,16 @@
+import os
+import time
+
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QDate, pyqtSignal
 
 from basic import strListToString, parseStrListString
 from classes import Book
+from fileMethods import getFilePath
 from mydatabase import MyDb
+from mythreads import convertThread
+from fileMethods import *
 
 
 class EditDataDialog(QDialog):
@@ -28,7 +34,7 @@ class EditDataDialog(QDialog):
         if book.pub_date:
             date = QDate()
             self.pub_dateInput.setDate(date.fromString(book.pub_date, 'yyyyMMdd'))
-        self.publisherLabel = QLabel("出版商")
+        self.publisherLabel = QLabel("出版社")
         self.publisherInput = QLineEdit()
         if book.publisher:
             self.publisherInput.setText(book.publisher)
@@ -88,5 +94,124 @@ class EditDataDialog(QDialog):
 
     def onCancle(self):
         self.close()
+
+
+class ImportFileEditDialog(QDialog):
+    changeSignal = pyqtSignal(str, list, str, int)
+
+    def __init__(self, name=None, parent=None):
+        super(ImportFileEditDialog, self).__init__(parent)
+        self.nameLabel = QLabel("书名")
+        self.nameInput = QLineEdit()
+        if name:
+            self.nameInput.setText(name)
+        self.authorLabel = QLabel("作者")
+        self.authorInput = QLineEdit()
+        self.languageLabel = QLabel("语言")
+        self.languageInput = QLineEdit()
+        self.ratingLabel = QLabel("评分")
+        self.ratingInput = QLineEdit()
+        self.ratingInput.setValidator(QIntValidator(0, 5))
+        self.okBtn = QPushButton("确定")
+        self.okBtn.clicked.connect(self.onClicked)
+        self.cancleBtn = QPushButton("取消转换")
+        self.cancleBtn.clicked.connect(self.onCancle)
+        self.form = QFormLayout()
+        self.form.addRow(self.nameLabel, self.nameInput)
+        self.form.addRow(self.authorLabel, self.authorInput)
+        self.form.addRow(self.languageLabel, self.languageInput)
+        self.form.addRow(self.ratingLabel, self.ratingInput)
+        self.form.addRow(self.okBtn, self.cancleBtn)
+        self.setLayout(self.form)
+
+    def onClicked(self):
+        name = self.nameInput.text()
+        authors = parseStrListString(self.authorInput.text())
+        language = self.languageInput.text()
+        if self.ratingInput.text():
+            rating = int(self.ratingInput.text())
+        else:
+            rating = 0
+        self.changeSignal.emit(name, authors, language, rating)
+        self.close()
+
+    def onCancle(self):
+        self.close()
+
+
+class ImportFileDialog(QDialog):
+    finishSignal = pyqtSignal(str, str, list, str, int)
+
+    def __init__(self, basepath, db, parent=None):
+        super(ImportFileDialog, self).__init__(parent)
+        self.basePath = basepath
+        self.db = db
+        self.filepath, _ = QFileDialog.getOpenFileName(self, "选择文件", ".", "docx or markdown file(*.docx *.md)")
+        if self.filepath:
+            direcPath, file = os.path.split(self.filepath)
+            self.filename, self.filesufix = file.split('.')
+            dig = ImportFileEditDialog(self.filename, self)
+            dig.changeSignal.connect(self.onConvert)
+            dig.show()
+
+    def onConvert(self, name, authors, language, rating):
+        if not name:
+            name = self.filename
+        bookPath, bookFilePath = getFilePath(self.basePath, name, self.db.getID(), self.filepath)
+        pdfFilePath = os.path.join(bookPath, name+'.pdf')
+        if self.filesufix == 'md':
+            t = convertThread(mdToPdf, (bookFilePath, pdfFilePath))
+        else:  # docx
+            t = convertThread(docxToPdf, (bookFilePath, pdfFilePath))
+        t.finishSignal.connect(lambda: self.finishConvert(pdfFilePath, name, authors, language, rating))
+        t.start()
+        time.sleep(1)
+
+    def finishConvert(self, pdfFilePath, name, authors, language, rating):
+        self.finishSignal.emit(pdfFilePath, name, authors, language, rating)
+
+
+class HighSortDialog(QDialog):
+    finishSignal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(HighSortDialog, self).__init__(parent)
+
+
+class ConvertFileDialog(QDialog):
+    finishSignal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(ConvertFileDialog, self).__init__(parent)
+
+
+class ExportFileDialog(QDialog):
+    finishSignal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(ExportFileDialog, self).__init__(parent)
+
+
+class ShareDialog(QDialog):
+    finishSignal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(ShareDialog, self).__init__(parent)
+
+
+class SettingDialog(QDialog):
+    finishSignal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(SettingDialog, self).__init__(parent)
+
+
+class HighSearchDialog(QDialog):
+    finishSignal = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(HighSearchDialog, self).__init__(parent)
+
+
 
 

@@ -13,10 +13,10 @@ def parseStrListString(input_str):
 
 
 # 此函数将str列表转换成一个字符串
-def strListToString(tag_list):
-    if not tag_list:
+def strListToString(str_list):
+    if not str_list:
         return ""
-    tag_str = ", ".join(tag_list)
+    tag_str = ", ".join(str_list)
     return tag_str
 
 

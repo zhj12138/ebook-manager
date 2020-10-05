@@ -38,6 +38,8 @@ class BookManager(QMainWindow):
         # self.infoView.setMaximumWidth(700)
         # self.infoView.setMinimumWidth(200)
 
+        self.importfiledialog = None
+
         # self.scrollarea.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         # self.scrollarea.setSizePolicy()
         self.scrollarea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -83,7 +85,7 @@ class BookManager(QMainWindow):
         self.toolbar.addbook.triggered.connect(self.addBook)
         self.toolbar.inbook.triggered.connect(self.inBook)
         self.toolbar.editbook.triggered.connect(self.editBook)
-        self.toolbar.sortbooks.triggered.connect(self.sortBooks)
+        self.toolbar.sortBtn.clicked.connect(self.sortBooks)
         self.toolbar.highSort.triggered.connect(self.HighSort)
         self.toolbar.readbook.triggered.connect(self.readBook)
         self.toolbar.convertbook.triggered.connect(self.convertBook)
@@ -95,6 +97,7 @@ class BookManager(QMainWindow):
         self.toolbar.star.triggered.connect(self.giveusStar)
         # self.toolbar.gethelp.triggered.connect(self.getHelp)
         self.toolbar.setting.triggered.connect(self.setSetting)
+        self.toolbar.sortModeChangedSignal.connect(self.sortBooks)
 
     def addBook(self):
         os.chdir(self.mainExePath)
@@ -113,7 +116,7 @@ class BookManager(QMainWindow):
             os.chdir(self.mainExePath)
             self.booksView.updateView(self.curShowBooks)
             self.updateTreeView()
-            time.sleep(1)
+            # time.sleep(1)
             # print("Hi")
 
     def updateInfo(self, ID):
@@ -137,13 +140,29 @@ class BookManager(QMainWindow):
         self.treeView.updatePublisher(publishers)
 
     def onTreeItemClicked(self, books):
+        self.curShowBooks = books
         self.booksView.updateView(books)
     # def resizeUpdate(self, ev):
     #     if self.scrollarea.size().width() > 1500:
     #         self.booksView.updateView(self.curShowBooks)
 
     def inBook(self):
-        pass
+        self.importfiledialog = ImportFileDialog(self.bookShelfPath, self.db, self)
+        self.importfiledialog.finishSignal.connect(self.onInBook)
+        self.importfiledialog.show()
+
+    def onInBook(self, pdfFilePath, name, authors, language, rating):
+        doc = fitz.open(pdfFilePath)
+        book_path, _ = os.path.split(pdfFilePath)
+        cover_path = getCover(doc, book_path)
+        self.db.createNewBook(name=name, authors=authors, language=language, rating=rating, file_path=pdfFilePath,
+                              cover_path=cover_path)
+        self.curShowBooks = self.db.getAllBooks()
+        # print("Hello")
+        os.chdir(self.mainExePath)
+        self.booksView.updateView(self.curShowBooks)
+        self.updateTreeView()
+        self.importfiledialog.close()
 
     def editBook(self):
         if not self.booksView.lastActive:
@@ -159,13 +178,47 @@ class BookManager(QMainWindow):
         self.updateInfo(ID)
 
     def sortBooks(self):
-        books = sorted(self.curShowBooks, key=lambda book: book.name)
-        if books == self.curShowBooks:
-            self.toolbar.sortbooks.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortUp-2.png')))
-            self.curShowBooks = sorted(self.curShowBooks, key=lambda book: book.name, reverse=True)
-        else:
-            self.toolbar.sortbooks.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortDown.png')))
-            self.curShowBooks = books
+        if self.toolbar.sortMode == 'name':
+            books = sorted(self.curShowBooks, key=lambda book: book.name)
+            if books == self.curShowBooks:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortUp-2.png')))
+                self.curShowBooks = sorted(self.curShowBooks, key=lambda book: book.name, reverse=True)
+            else:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortDown.png')))
+                self.curShowBooks = books
+        elif self.toolbar.sortMode == 'author':
+            books = sorted(self.curShowBooks, key=lambda book: strListToString(book.authors))
+            if books == self.curShowBooks:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortUp-2.png')))
+                self.curShowBooks = sorted(self.curShowBooks, key=lambda book: strListToString(book.authors),
+                                           reverse=True)
+            else:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortDown.png')))
+                self.curShowBooks = books
+        elif self.toolbar.sortMode == 'publisher':
+            books = sorted(self.curShowBooks, key=lambda book: book.publisher)
+            if books == self.curShowBooks:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortUp-2.png')))
+                self.curShowBooks = sorted(self.curShowBooks, key=lambda book: book.publisher, reverse=True)
+            else:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortDown.png')))
+                self.curShowBooks = books
+        elif self.toolbar.sortMode == 'pub_date':
+            books = sorted(self.curShowBooks, key=lambda book: book.pub_date)
+            if books == self.curShowBooks:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortUp-2.png')))
+                self.curShowBooks = sorted(self.curShowBooks, key=lambda book: book.pub_date, reverse=True)
+            else:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortDown.png')))
+                self.curShowBooks = books
+        else:  # sort by rating
+            books = sorted(self.curShowBooks, key=lambda book: book.rating)
+            if books == self.curShowBooks:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortUp-2.png')))
+                self.curShowBooks = sorted(self.curShowBooks, key=lambda book: book.rating, reverse=True)
+            else:
+                self.toolbar.sortBtn.setIcon(QIcon(os.path.join(self.mainExePath, 'img/sortDown.png')))
+                self.curShowBooks = books
         self.booksView.updateView(self.curShowBooks)
 
     def HighSort(self):
