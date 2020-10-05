@@ -128,6 +128,7 @@ class BookManager(QMainWindow):
 
     def updateInfo(self, ID):
         book = self.db.getBookByID(ID)
+        # print(ID)
         self.infoView.updateView(book)
 
     def updateTreeView(self):
@@ -279,7 +280,10 @@ class BookManager(QMainWindow):
             self.updateTreeView()
             self.curShowBooks = self.db.getAllBooks()
             self.booksView.updateView(self.curShowBooks)
-            self.infoView.setDefault()
+            tempbook = Book()
+            self.infoView.updateView(tempbook)
+            # os.chdir(self.mainExePath)
+            # self.infoView.setDefault()
             # self.booksView.lastActive = None
 
     def updateBySearch(self, books):
@@ -351,5 +355,3 @@ class BookManager(QMainWindow):
 
     def setSetting(self):
         pass
-
-

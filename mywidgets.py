@@ -1,12 +1,10 @@
 import os
 import re
 from math import floor, ceil
-
 from PyQt5 import QtGui
 from PyQt5.QtCore import QSize, Qt, pyqtSignal, QAbstractItemModel, QStringListModel
 from PyQt5.QtGui import QFont, QIcon, QPixmap, QMouseEvent
 from PyQt5.QtWidgets import *
-
 from basic import strListToString, email_to
 from classes import Book
 from typing import List
@@ -30,15 +28,11 @@ class MyToolBar(QToolBar):
         self.addbook = QAction(QIcon('img/add-2.png'), "添加书籍", self)
         self.inbook = QAction(QIcon('img/import-6.png'), "导入文件", self)
         self.editbook = QAction(QIcon('img/edit-5.png'), "编辑元数据", self)
-        # self.sortbooks = QAction(QIcon('img/sortUp-2.png'), "排序", self)
-        # self.highSort = QAction(QIcon('img/sort-7.png'), "高级排序", self)
         self.readbook = QAction(QIcon('img/read-2.png'), "阅读书籍", self)
-        # self.convertbook = QAction(QIcon('img/convert-1.png'), "转换书籍", self)
         self.deletebook = QAction(QIcon('img/delete-4.png'), "移除书籍", self)
         self.booklist = QAction(QIcon('img/booklist-2.png'), "创建书单", self)
         self.bookshelf = QAction(QIcon('img/bookshelf.png'), "打开书库", self)
         self.export = QAction(QIcon('img/export-1.png'), "导出信息", self)
-        # self.share = QAction(QIcon('img/share-7.png'), "分享", self)
         self.star = QAction(QIcon('img/star-1.png'), "支持我们", self)
         self.gethelp = QAction(QIcon("img/help-2.png"), "帮助", self)
         self.setting = QAction(QIcon("img/setting-3.png"), "设置", self)
@@ -85,6 +79,7 @@ class MyToolBar(QToolBar):
         self.shareMenu.setFont(QFont("", 14))
         self.toKindle = self.shareMenu.addMenu("发送到kindle")
         self.toKindle.setFont(QFont("", 14))
+        self.toKindle.triggered.connect(self.menuClicked)
         self.inputEmail = QAction("添加Kindle邮箱", self)
         self.inputEmail.triggered.connect(self.inputMail)
         self.toQQ = self.shareMenu.addMenu("分享到QQ")
@@ -108,7 +103,6 @@ class MyToolBar(QToolBar):
         self.addSeparator()
         self.addActions([self.editbook])
         self.addWidget(self.sortBtn)
-        # self.addActions([self.highSort])
         self.addSeparator()
         self.addActions([self.readbook])
         self.addWidget(self.outBtn)
@@ -139,10 +133,9 @@ class MyToolBar(QToolBar):
         self.toKindle.clear()
         for mail in emails:
             action = QAction(mail, self)
-            # action.triggered.connect(lambda: self.sendMail(action.text()))
             self.toKindle.addAction(action)
         self.toKindle.addAction(self.inputEmail)
-        self.toKindle.triggered.connect(self.menuClicked)
+        # self.toKindle.triggered.connect(self.menuClicked)
 
     def menuClicked(self, action):
         if action.text() != "添加Kindle邮箱":
@@ -200,7 +193,6 @@ class MyTree(QTreeWidget):
         for author in author_list:
             node = QTreeWidgetItem(self.authors)
             node.setText(0, author)
-            # print(node.parent().text(0))
 
     def updateBookLists(self, book_lists):
         self.booklists.takeChildren()
@@ -226,10 +218,7 @@ class MyTree(QTreeWidget):
             node = QTreeWidgetItem(self.publisher)
             node.setText(0, publisher)
 
-    # def updateRating(self):
-    #     self.rating.takeChildren()
     def onItemClicked(self, item: QTreeWidgetItem, col):
-        # if not item.parent():  # 是顶层结点，更新booksview变为显示所有书籍
         books = self.db.getAllBooks()
         ITEM_TEXT = item.text(0)
         if item.parent():
@@ -274,9 +263,6 @@ class MyGrid(QGridLayout):
         super(MyGrid, self).__init__(parent)
         self.father = parent
         self.scrollarea = scro
-        # print(parent.size().width(), parent.size().height())
-        # self.father.resizeEvent = self.onResize
-        # print(wid.size().width(), wid.size().height())
         self.setSpacing(30)
         self.lastActive = None
         self.dict = {}
@@ -284,23 +270,14 @@ class MyGrid(QGridLayout):
         self.itemHeight = 458
 
     def updateView(self, books: Books):
-        # children = self.findChildren(MyLabel)
-        # for child in children:
-        #     self.removeWidget(child)
         self.deleteAll()
         self.lastActive = None
         if not books:
             return
         total = len(books)
-        # print(total)
         cols = 3
-        # if self.scrollarea.size().width() > 1500:
-        #     cols = 4
         rows = ceil(total / cols)
-        # print(cols)
-        # print(rows)
         points = [(i, j) for i in range(rows) for j in range(cols)]
-        # print(points)
         tempWid = QWidget()
         for point, book in zip(points, books):
             tempLabel = MyLabel()
@@ -328,8 +305,6 @@ class MyGrid(QGridLayout):
         sender.setStyleSheet("border:4px solid blue;")
         self.lastActive = sender
         self.itemClicked.emit(self.dict[sender])  # 传回一个ID
-        # print(sender.pixmap().size().width(), sender.pixmap().size().height())
-        # print(sender.pixmap().)
 
 
 class MyList(QVBoxLayout):
@@ -360,20 +335,14 @@ class MyList(QVBoxLayout):
         self.form.insertRow(4, self.tagslabel, self.tags)
         self.form.insertRow(5, self.booklistslabel, self.booklists)
 
-        # self.detaillabel = QLabel("书籍的详细信息")
-        # vlay = QVBoxLayout()
         self.addWidget(self.picLabel)
         temwidget = QWidget()
         temwidget.setFont(QFont("", 14))
         temwidget.setLayout(self.form)
         self.scrollarea = QScrollArea()
         self.scrollarea.setFrameShape(QFrame.NoFrame)
-        # self.scrollarea.setStyleSheet("border:none;QLabel{font-size:14px;}")
         self.scrollarea.setWidget(temwidget)
-        # temwidget.setMaximumSize(200, 300)
         self.addWidget(self.scrollarea)
-        # vlay.addWidget(self.detaillabel)
-        # self.setLayout(vlay)
 
     def setDefault(self):
         self.picLabel.setPixmap(QPixmap('img/default-pic.png').scaled(365, 458))
@@ -384,6 +353,10 @@ class MyList(QVBoxLayout):
         self.tags = QLabel("无")
         self.booklists = QLabel("无")
         self.bookPath = None
+        temp = QWidget()
+        temp.setFont(QFont("", 14))
+        temp.setLayout(self.form)
+        self.scrollarea.setWidget(temp)
 
     def updateView(self, book: Book):
         if book.cover_path:
@@ -419,15 +392,24 @@ class MyList(QVBoxLayout):
         temp = QWidget()
         temp.setFont(QFont("", 14))
         temp.setLayout(self.form)
-        temp.setMinimumWidth(0)
         self.scrollarea.setWidget(temp)
 
     def openFile(self):
-        os.startfile(self.bookPath)
+        if not self.bookPath:
+            return
+        if os.path.exists(self.bookPath):
+            os.startfile(self.bookPath)
+        else:
+            QMessageBox.about(self, "提醒", "文件不存在")
 
     def openPath(self):
+        if not self.bookPath:
+            return
         mypath, fileName = os.path.split(self.bookPath)
-        os.startfile(mypath)
+        if os.path.exists(mypath):
+            os.startfile(mypath)
+        else:
+            QMessageBox.about(self, "提醒", "路径不存在")
 
 
 class MySearch(QToolBar):
@@ -440,7 +422,6 @@ class MySearch(QToolBar):
         self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.searchModeLabel = QLabel("搜索模式")
         self.searchBy = QComboBox()
-        # self.searchBy.setStyleSheet("background-color:white")
         self.searchBy.addItems(['按书名', '按作者', '按书单', '按标签', '按出版社', '按ISBN'])
         self.searchAttr = self.searchBy.currentText()
         self.searchBy.currentTextChanged.connect(self.changeAttr)
@@ -455,7 +436,6 @@ class MySearch(QToolBar):
         # 初始化
         model = QStringListModel()
         booknames = self.db.getAllBookNames()
-        # print(booknames)
         model.setStringList(booknames)
         self.inputCompleter.setModel(model)
         self.inputCompleter.setFilterMode(Qt.MatchExactly)
@@ -464,8 +444,8 @@ class MySearch(QToolBar):
         self.inputLine.setPlaceholderText("选择搜索模式后，在此输入关键词")
         self.searchAct = QAction(QIcon("img/search-4.png"), "搜索", self)
         self.highSearchAct = QAction(QIcon('img/hsearch-1.png'), "高级搜索", self)
-        # self.historySearchAct = QAction(QIcon('img/history-1.png'), "历史搜索", self)
         self.historyMenu = QMenu()
+        self.historyMenu.triggered.connect(self.historyClicked)
         self.historyMenu.setFont(QFont("", 14))
         self.historyBtn = QToolButton()
         self.historyBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
@@ -477,7 +457,6 @@ class MySearch(QToolBar):
 
         self.searchAct.triggered.connect(self.onSearch)
         self.highSearchAct.triggered.connect(self.onHighSearch)
-        # self.historySearchAct.triggered.connect(self.onHistory)
 
         self.addWidget(self.searchModeLabel)
         self.addWidget(self.searchBy)
@@ -548,15 +527,12 @@ class MySearch(QToolBar):
         recentTen = heapq.nlargest(10, histories)
         for his in recentTen:
             t, content = his
-            # print(content)
             action = QAction(content, self.historyMenu)
-            # action.triggered.connect(lambda: self.historyClicked(action.text()))
             self.historyMenu.addAction(action)
-        self.historyMenu.triggered.connect(self.historyClicked)
+        # self.historyMenu.triggered.connect(self.historyClicked)
 
     def historyClicked(self, action):
         self.inputLine.setText(action.text())
-        # print(action.text())
 
     def changeAttr(self, attr):
         self.searchAttr = attr
@@ -587,10 +563,3 @@ class MySearch(QToolBar):
             self.inputCompleter.setFilterMode(Qt.MatchExactly)
         elif attrMode == '模糊匹配':
             self.inputCompleter.setFilterMode(Qt.MatchContains)
-        # else:  # 正则匹配
-        #     self.inputCompleter.setFilterMode(Qt.MatchRegExp)
-
-
-
-
-

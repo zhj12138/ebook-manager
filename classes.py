@@ -1,9 +1,7 @@
 # 此文件存储核心的类和和类相关的方法
 import re
-
 from basic import strListToString
 import fitz
-from collections import deque
 import shutil
 import os
 
@@ -213,11 +211,3 @@ class BookList:
     def share(self):
         pass
 
-
-# class MyHistory:
-#     def __init__(self, size=10):
-#         self.histories = deque(maxlen=size)
-#         # 每一个history记录是一个元组(time,content)
-#
-#     def addHistory(self, db, content):  # 需确保content不在histories中，否则会有重复
-#         self.db.get

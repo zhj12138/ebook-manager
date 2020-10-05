@@ -1,5 +1,4 @@
 # 此文件存储基础方法
-
 import smtplib
 from email.header import Header
 from email.mime.application import MIMEApplication
@@ -90,7 +89,6 @@ def email_to(file_path, address):
     msg = MIMEMultipart()
     path, filename = os.path.split(file_path)
     pre, suf = filename.split('.')
-    # subject = filename.split('/')[-1][:-4]
 
     msg['Subject'] = Header(pre)
     msg['From'] = Header(from_address)

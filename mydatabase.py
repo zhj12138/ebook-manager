@@ -346,10 +346,7 @@ class MyDb:
                     bookLists)
         self.addBook(book)
         if authors:
-            # print(authors)
             book.setAuthors(self, authors)
-        # self.addBook(book)
-        # return book
 
     # 每次新建一个书单时调用该方法
     # 新建书单的两种方式：1、通过按钮新建一个空书单 2、通过书籍的右键菜单，添加到书单，如果用户填写的书单不存在，将自动新建一个书单，

@@ -1,13 +1,9 @@
-import os
 import time
-
 from PyQt5.QtGui import QIntValidator
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QDate, pyqtSignal
-
-from basic import strListToString, parseStrListString
+from basic import strListToString
 from classes import Book
-from fileMethods import getFilePath
 from mydatabase import MyDb
 from mythreads import convertThread
 from fileMethods import *
@@ -173,20 +169,6 @@ class ImportFileDialog(QDialog):
         self.finishSignal.emit(pdfFilePath, name, authors, language, rating)
 
 
-# class HighSortDialog(QDialog):
-#     finishSignal = pyqtSignal()
-#
-#     def __init__(self, parent=None):
-#         super(HighSortDialog, self).__init__(parent)
-
-
-# class ConvertFileDialog(QDialog):
-#     finishSignal = pyqtSignal()
-#
-#     def __init__(self, parent=None):
-#         super(ConvertFileDialog, self).__init__(parent)
-
-
 class ExportINFODialog(QDialog):
     finishSignal = pyqtSignal(str)
 
@@ -218,7 +200,3 @@ class HighSearchDialog(QDialog):
 
     def __init__(self, parent=None):
         super(HighSearchDialog, self).__init__(parent)
-
-
-
-
