@@ -158,6 +158,8 @@ class ImportFileDialog(QDialog):
         if not name:
             name = self.filename
         bookPath, bookFilePath = getFilePath(self.basePath, name, self.db.getID(), self.filepath)
+        if not bookPath:
+            return
         pdfFilePath = os.path.join(bookPath, name+'.pdf')
         if self.filesufix == 'md':
             t = convertThread(mdToPdf, (bookFilePath, pdfFilePath))

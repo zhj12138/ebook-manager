@@ -43,6 +43,7 @@ def getFilePath(basePath, name, ID, filename):
         os.mkdir(name + "_" + str(ID))
     except:
         print("File exists")
+        return None, None
     bookFilePath = shutil.copy(filename, bookPath)  # 新的文件路径
     # print(bookFilePath)
     return bookPath, bookFilePath

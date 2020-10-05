@@ -12,5 +12,16 @@
         </library>
       </libraries>
     </data-source>
+    <data-source source="LOCAL" name="info [2]" uuid="3e2b9bc2-38c2-4355-8863-ca9089d1a18e">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:F:\Github\eb2\ebook-manager\info.db</jdbc-url>
+      <libraries>
+        <library>
+          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.31.1/sqlite-jdbc-3.31.1.jar</url>
+        </library>
+      </libraries>
+    </data-source>
   </component>
 </project>

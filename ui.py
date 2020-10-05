@@ -113,6 +113,8 @@ class BookManager(QMainWindow):
             authors = getAuthors(doc)
             pub_date = getPubDate(doc)
             book_path, file_path = getFilePath(self.bookShelfPath, name, self.db.getID(), filename)
+            if not book_path:
+                return
             cover_path = getCover(doc, book_path)
             self.db.createNewBook(name, authors, pub_date, file_path=file_path, cover_path=cover_path)
             # print("Hi")

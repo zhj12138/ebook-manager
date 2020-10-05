@@ -99,7 +99,7 @@ class MyDb:
         self.close()
         # print("Ok")
         if not books:
-            return None
+            return []
         return books
 
     def getAllBookRows(self):
@@ -135,7 +135,7 @@ class MyDb:
         books = parseRetBooks(ret)
         self.close()
         if not books:
-            return None
+            return []
         return books[0]
 
     # 对书籍进行模糊搜索, attr_name对应数据库表的相应属性名，value则是需要查询的值(不支持列表，只能单个查询)
@@ -144,8 +144,6 @@ class MyDb:
         ret = self.cursor.execute('select * from %s where %s like "%%%s%%" ' % (self.book_table, attr_name, value))
         books = parseRetBooks(ret)
         self.close()
-        if not books:
-            return None
         return books
 
     # 对书籍进行精确的搜索
@@ -154,8 +152,6 @@ class MyDb:
         ret = self.cursor.execute("select * from %s where %s='%s'" % (self.book_table, attr_name, value))
         books = parseRetBooks(ret)
         self.close()
-        if not books:
-            return None
         return books
 
     # 获取所有书单
@@ -164,8 +160,6 @@ class MyDb:
         ret = self.cursor.execute('select * from %s' % self.booklist_table)
         booklists = parseRetBooklists(ret)
         self.close()
-        if not BookList:
-            return None
         return booklists
 
     # 根据书单名进行检索，返回相应书单
@@ -175,7 +169,7 @@ class MyDb:
         booklists = parseRetBooklists(ret)
         self.close()
         if not booklists:
-            return None
+            return []
         return booklists[0]
 
     # 获取所有的历史记录，返回一个(time, content)列表
@@ -196,8 +190,6 @@ class MyDb:
         ret = self.cursor.execute('select * from %s' % self.author_table)
         authors = parseRetAuthors(ret)
         self.close()
-        if not authors:
-            return None
         return authors
 
     def getAllTags(self):
@@ -224,8 +216,6 @@ class MyDb:
             ID = parseIntListString(row[2])
             books.append(ID)
         self.close()
-        if not books:
-            return None
         return books
 
     # 传入一个作者的name，获取相应的Author对象
@@ -235,7 +225,7 @@ class MyDb:
         authors = parseRetAuthors(ret)
         self.close()
         if not authors:
-            return None
+            return []
         return authors[0]
 
     # 传入一个Book对象，添加到数据库中
